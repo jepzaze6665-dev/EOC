@@ -1,0 +1,19 @@
+{
+  "name": "eclipse-online",
+  "version": "0.1.0",
+  "description": "ECLIPSE ONLINE - 2D pixel art MMORPG (World Phase 1R: image map engine)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server/dev-server.js",
+    "dev": "node server/dev-server.js",
+    "test": "node tests/world-engine.test.mjs",
+    "maps": "node tools/build-maps.mjs",
+    "assets": "node tools/build-assets.mjs",
+    "sheets": "node tools/index-sheets.mjs",
+    "isomaps": "node tools/build-iso-maps.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

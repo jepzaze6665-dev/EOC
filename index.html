@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECLIPSE ONLINE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- ==================== TITLE ==================== -->
+  <section id="screen-title" class="screen">
+    <div class="title-block">
+      <h1 class="logo">ECLIPSE<span>ONLINE</span></h1>
+      <p class="tagline">The world keeps its secrets. Go and find them.</p>
+      <div class="menu">
+        <button id="btn-continue" class="btn btn-primary hidden">Continue</button>
+        <button id="btn-new" class="btn btn-ghost">New Character</button>
+        <button id="btn-delete" class="btn btn-danger hidden">Delete Save</button>
+      </div>
+      <p id="saved-info" class="saved-info"></p>
+      <p class="version">Phase 1 — Foundation Prototype · Single Player</p>
+    </div>
+  </section>
+
+  <!-- ==================== CHARACTER CREATION ==================== -->
+  <section id="screen-creation" class="screen">
+    <div class="panel creation-panel">
+      <header class="panel-header">
+        <h2>Character Creation</h2>
+        <ol class="stepper">
+          <li data-step="preset">1 · Preset</li>
+          <li data-step="class">2 · Class</li>
+          <li data-step="confirm">3 · Confirm</li>
+        </ol>
+      </header>
+
+      <div class="creation-body">
+        <aside class="preview-panel">
+          <canvas id="preview-canvas" width="120" height="160"></canvas>
+          <div id="preview-name" class="preview-name">—</div>
+          <div id="preview-class" class="preview-class">—</div>
+        </aside>
+
+        <div class="creation-main">
+          <div class="step-panel" data-step="preset">
+            <div class="field-row">
+              <label for="creation-name">Character Name</label>
+              <input id="creation-name" type="text" maxlength="12" autocomplete="off" spellcheck="false">
+              <button id="btn-randomize" type="button" class="btn btn-small">Randomize</button>
+            </div>
+            <h3>Appearance Preset</h3>
+            <div id="preset-grid" class="preset-grid"></div>
+          </div>
+
+          <div class="step-panel" data-step="class">
+            <h3>Starting Class</h3>
+            <div id="class-grid" class="class-grid"></div>
+            <div id="class-detail" class="class-detail"></div>
+          </div>
+
+          <div class="step-panel" data-step="confirm">
+            <h3>Confirm</h3>
+            <div id="confirm-summary" class="confirm-summary"></div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="panel-footer">
+        <span id="creation-error" class="error"></span>
+        <div class="footer-buttons">
+          <button id="btn-back" type="button" class="btn btn-ghost">Back</button>
+          <button id="btn-next" type="button" class="btn btn-primary">Next</button>
+        </div>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ==================== LOADING ==================== -->
+  <section id="screen-loading" class="screen">
+    <div class="loading-block">
+      <div class="loading-title">Entering Lumina Village…</div>
+      <div class="loading-bar"><div id="loading-fill"></div></div>
+      <div id="loading-tip" class="loading-tip"></div>
+    </div>
+  </section>
+
+  <!-- ==================== IN-GAME HUD ==================== -->
+  <div id="hud" class="hidden">
+    <div class="hud-top-left">
+      <div class="portrait-frame"><canvas id="portrait-canvas" width="56" height="72"></canvas></div>
+      <div class="vitals">
+        <div class="vital-title"><span id="hud-name"></span><span class="lv">Lv.<b id="hud-level">1</b></span></div>
+        <div id="hud-class" class="vital-class"></div>
+        <div class="bar bar-hp"><div id="hud-hp"></div><span id="hud-hp-text"></span></div>
+        <div class="bar bar-mp"><div id="hud-mp"></div><span id="hud-mp-text"></span></div>
+        <div class="bar bar-exp"><div id="hud-exp"></div><span id="hud-exp-text"></span></div>
+        <div id="hud-gold" class="gold-line">◆ 0</div>
+      </div>
+    </div>
+
+    <div class="hud-top-right">
+      <div id="hud-zone">Lumina Village</div>
+      <div class="hud-meta"><span id="hud-coords"></span> · <span id="hud-fps"></span></div>
+      <div id="zone-flag" class="hud-meta safe">SAFE ZONE</div>
+      <div id="combat-flag" class="hud-meta combat hidden">IN COMBAT</div>
+      <div id="quest-tracker" class="quest-tracker hidden"></div>
+    </div>
+
+    <div id="target-frame" class="target-frame hidden">
+      <div id="target-name" class="target-name"></div>
+      <div class="bar bar-target"><div id="target-hp"></div><span id="target-hp-text"></span></div>
+    </div>
+
+    <div id="toasts" class="toasts"></div>
+
+    <div class="hud-bottom">
+      <div id="hud-skillbar" class="skillbar"></div>
+      <div class="hud-keys">WASD เดิน · Space โจมตี · 1-4 สกิล · Shift กัน · Q หลบ · Tab เป้าหมาย · F โพชั่น · E คุย/เก็บ · C/I/J/K หน้าต่าง</div>
+    </div>
+
+    <div id="interact-prompt" class="hidden"></div>
+
+    <div id="dialogue" class="hidden">
+      <div id="dialogue-name" class="dialogue-name"></div>
+      <div id="dialogue-text" class="dialogue-text"></div>
+      <div id="dialogue-hint" class="dialogue-hint">[E] ต่อไป · [Esc] ปิด</div>
+    </div>
+  </div>
+
+  <!-- ==================== DEATH ==================== -->
+  <div id="death-overlay" class="hidden">
+    <div class="death-title">YOU WERE DEFEATED</div>
+    <div class="death-sub">กำลังกลับสู่ Lumina Village…</div>
+  </div>
+
+  <!-- ==================== CHARACTER / INVENTORY / QUEST WINDOW ==================== -->
+  <div id="panel-window" class="hidden">
+    <header class="panel-tabs">
+      <button class="panel-tab-btn" data-tab="character">Character<small>C</small></button>
+      <button class="panel-tab-btn" data-tab="inventory">Inventory<small>I</small></button>
+      <button class="panel-tab-btn" data-tab="quests">Quests<small>J</small></button>
+      <button class="panel-tab-btn" data-tab="skills">Skills<small>K</small></button>
+      <button id="panel-close" class="panel-close" title="Close (Esc)">✕</button>
+    </header>
+    <div id="panel-body" class="panel-body"></div>
+  </div>
+
+  <!-- Shown only when the page is opened directly from disk (ES modules need http). -->
+  <div id="file-warning">
+    <h2>ต้องรันผ่านเซิร์ฟเวอร์</h2>
+    <p>เกมนี้ใช้ ES Modules จึงเปิดไฟล์ตรง ๆ (file://) ไม่ได้</p>
+    <p>เปิด Terminal ที่โฟลเดอร์นี้แล้วพิมพ์:</p>
+    <code>npm start</code>
+    <p>จากนั้นเปิด <b>http://localhost:5173</b></p>
+  </div>
+
+  <script>
+    if (location.protocol === 'file:') document.documentElement.classList.add('file-protocol');
+  </script>
+  <script type="module" src="client/main.js"></script>
+</body>
+</html>

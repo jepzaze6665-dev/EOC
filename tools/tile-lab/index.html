@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECLIPSE ONLINE - Tile Lab (Step 0)</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b0f0c; overflow: hidden; }
+    /* The canvas is sized in real screen pixels by tile-lab.js; CSS only pins it to the window. */
+    canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+    #info {
+      position: fixed; left: 12px; top: 12px; padding: 8px 12px; border-radius: 6px;
+      background: rgba(10, 10, 20, 0.78); color: #f2e6c4; font: 13px/1.5 system-ui, sans-serif;
+      pointer-events: none; white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="lab"></canvas>
+  <div id="info">loading…</div>
+  <script type="module" src="./tile-lab.js"></script>
+</body>
+</html>

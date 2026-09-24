@@ -1,0 +1,7 @@
+* text=auto eol=lf
+
+# pictures without a file extension (concept art, AI tile sheets)
+docs/Map/** binary
+docs/UI/** binary
+assets/maps/map1/** binary
+*.png binary

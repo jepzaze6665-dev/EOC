@@ -1,0 +1,106 @@
+# ECLIPSE ONLINE — Roadmap & Decisions
+
+อัปเดตล่าสุด: 2026-09-25
+
+เอกสารนี้เก็บ **แผนงานที่เหลือ** และ **การตัดสินใจที่ตกลงกันแล้ว** เพื่อให้ทำงานต่อบนเครื่องอื่นได้
+Brief ต้นฉบับอยู่ใน `docs/briefs/`
+
+---
+
+## สถานะปัจจุบัน
+
+### เสร็จแล้ว
+- **RPG Phase 1–4 (แผนเดิม):** สร้างตัวละคร, Class, Stats/EXP/Inventory/Equipment, NPC/Quest, Combat แบบ real-time, Skill tree, เลื่อนคลาสที่ Lv.20
+- **World Phase 1R + 2:** Image map engine (หมู่บ้าน/ป่าแบบรูปวาด), Map Manager, Map Transition แบบ fade, spawn แบบตั้งชื่อ
+- **Map System Milestone 1:** A1 Whispering Forest แบบ Isometric 150×150 tiles
+  - Chunk (32×32), Collision, Camera bounds, Zoom 1.0 / 1.25 / 1.5
+  - ความสูง 3 ระดับ + บันได + ผนังหน้าผา
+  - ขอบพื้นกลืนกัน, ตลิ่ง/ฟองน้ำ, เงาใต้วัตถุ, โทนสีอุ่น, ขอบจอมืด
+  - สะพานชิ้นเดียว, บันไดเป็นภาพเดียวต่อชุด
+  - ~2 ms/frame, 206 tests ผ่าน
+
+### เข้า A1 ได้อย่างไร (ชั่วคราว)
+เข้าเกม → กด `` ` `` (แผงนักพัฒนา) → "→ A1 (iso)"
+
+---
+
+## การตัดสินใจที่ตกลงแล้ว (ไม่ต้องถามซ้ำ)
+
+1. **ทิศทางแมพ: Isometric Tile + Chunk** สร้างจาก tile sheet ที่ผู้ใช้สร้างด้วย AI (`assets/maps/map1/`)
+   - รูปวาดใน `docs/Map/` = **Master Map** ใช้อ้างอิงผังเท่านั้น
+   - ห้ามกลับไปใช้ภาพวาดโค้ดแบบ placeholder เวอร์ชันแรก (ผู้ใช้ไม่ต้องการ)
+2. **FPS สำคัญที่สุด (MMORPG)**
+   - เอฟเฟกต์ที่เก็บไว้: โทนสีอุ่น, ขอบจอมืด, เงาใต้วัตถุ (ทั้งหมด cache ไว้ ไม่คำนวณทุกเฟรม)
+   - ลบออกแล้ว ห้ามเพิ่มกลับโดยไม่ถาม: แสงแดด, ใบไม้ร่วง, หิ่งห้อย, ต้นไม้ไหว, น้ำระยิบ, particle ของกองไฟในแมพ
+3. **Tile sheet จาก AI ส่งออกพื้นหลังโปร่งใสไม่ได้** — ลายหมากรุกเป็นสีจริงในภาพ, เครื่องมือ `tools/lib/image-ops.mjs` ลบให้
+4. **ผู้ใช้จะส่ง tile sheet + Master Map ของอีก 7 แมพมาทีหลัง** (A2, A3, B1, B2, B3, Asteria City)
+5. **Collision:** ผมเป็นคนวางเอง ผู้ใช้ชี้จุดที่ต้องแก้ แล้วผมแก้ในไฟล์ map source
+6. **Route A** = บันไดทิศเหนือของหมู่บ้าน, **Route B** = สะพานหิมะทิศตะวันออกเฉียงเหนือ (ปิดไว้ด้วย collision 5)
+7. **ความก้าวหน้า RPG:** skill tree แบบ point-buy, เลื่อนคลาสผ่าน trial quest ที่ Lv.20, cap Lv.60, อาวุธจำกัดตามประเภท
+8. **Secret content ต้องไม่บอกใบ้ใน UI** (pillar ของเกมคือการค้นพบ)
+
+---
+
+## แผนงานที่เหลือ
+
+> brief Map System กำหนดรายละเอียดไว้แค่ Milestone 1 — การแบ่ง Milestone 2+ เป็นข้อเสนอที่ผู้ใช้ยังปรับลำดับได้
+> ทุก Milestone ต้องทำงานได้จริงและทดสอบผ่านก่อนไปขั้นถัดไป
+
+### Milestone 2 — A1 เล่นได้จริง (brief Step 10–12, World Phase 4 ส่วน A1)
+1. Object Layer: มอนสเตอร์ / NPC / ป้าย / จุดเก็บของใน A1, โซนมอนสเตอร์ตามความยาก
+2. Route A → A1: บันไดเหนือของหมู่บ้านพาไป A1 แทนป่าเดิม (ป่าเดิมย้ายไป `legacy/`)
+3. Boss Arena ที่วงหินรูน: ทางเข้า, ขอบเขต, จุดเกิดบอส, แถบ HP บอส, สู้แล้วออกไม่ได้จนจบ
+4. Boss Forest Guardian: มีท่าโจมตีหลายแบบ
+5. Boss Gate + World State: ชนะแล้วทางไป A2 เปิด, เก็บใน `worldState` แยกจากตัวละคร (พร้อมย้ายไปเซิร์ฟเวอร์)
+6. ผลหลังชนะบอส: บทพูด NPC เปลี่ยน, เควสใหม่ปลดล็อก
+7. A2 ชั่วคราว (แผนที่เล็ก) จนกว่าจะได้ภาพ A2
+
+### Milestone 3 — Local Secret (brief Step 13–14, World Phase 7)
+1. Secret Layer + Trigger (เดินใกล้ / ตรวจดู / NPC / เวลา)
+2. Hidden Forest Hollow ใน A1 (เบาะแส: ศาลคริสตัลฝั่งตะวันออก)
+3. Secret Boss **Hollowfang**: เงื่อนไขเกิด, รางวัล, สถานะ
+4. เควสลับแยกจากเควสหลัก ไม่บอกใบ้ใน UI
+
+### Milestone 4 — F8 Map Debug Mode (brief Step 15)
+1. เปิด/ปิดชั้น: [VISUAL] [COLLISION] [OBJECT] [SECRET] [GRID] + Master Map ซ้อน
+2. เมาส์แสดงพิกัด World/Tile, คลิกดูข้อมูลช่อง (เดินได้ไหม / วัตถุ / ความลับ)
+3. ไม่แสดงใน Production Mode
+
+### Milestone 5 — หมู่บ้าน Isometric (World Phase 3 ที่พักไว้)
+1. แปลง Lumina Village เป็น tile โดยใช้รูปวาดเป็น Master Map
+2. อาคาร/ตลาด/โรงตีเหล็ก/โรงเตี๊ยม/ลานฝึกจาก sheet
+3. NPC ครบ รวม Teleport / Guild (placeholder)
+4. ทางเข้า Route B + Hidden Area ในถ้ำหน้าผาตะวันออกเฉียงใต้
+5. หลังจากนี้ทั้งเกมเป็น Isometric — ระบบ image map ย้ายไป `legacy/`
+
+### Milestone 6 — Route A ที่เหลือ (World Phase 4, รอภาพ)
+- **A2 Ancient Valley:** น้ำตก, หน้าผา, ถ้ำ, Elite, เควสลับ, ทางเข้า Dungeon (placeholder), บอส **Ancient Beast**
+- **A3 Ruins of Asteria:** วิหาร, ประตูโบราณ, พื้นที่กัดกร่อน, NPC ตำนาน, ประตูลับ, Major Boss **Asteria Guardian**
+- ชนะ → Route A สำเร็จ → เปิดทางเข้า City 2
+
+### Milestone 7 — Route B (World Phase 5, รอภาพ)
+- **B1 Frostwind Plains:** บอส Frostfang
+- **B2 Crystal Caverns:** ห้องลับ, ประตูลับ, บอส Crystal Golem
+- **B3 Frostpeak:** ป้อมโบราณ, พายุหิมะ, Major Boss **Frost Warden**
+
+### Milestone 8 — City 2 Asteria City (World Phase 6)
+ร้านค้า, ช่างตีเหล็ก, โรงเตี๊ยม, คลัง, NPC เควส, NPC เลื่อนคลาส, ทางเข้า Region อนาคต (placeholder)
+
+### Milestone 9 — World State + Save/Load (World Phase 8)
+บันทึกบอส/เส้นทาง/เควส/ความลับ/แมพล่าสุด (ตอนนี้ Continue เริ่มที่หมู่บ้านเสมอ) — ออกแบบให้ย้ายไปเซิร์ฟเวอร์ได้
+
+### Milestone 10 — Optimization (World Phase 9)
+โหลด asset เฉพาะแมพที่ใช้, คืนหน่วยความจำแมพที่ออกไป, ทดสอบเครื่องสเปกต่ำ, บีบอัดภาพ
+
+### ยังไม่อยู่ในแผน (brief ให้ไว้ทีหลัง)
+Multiplayer/Server, Login, Database, Party, Guild, Trading, PvP, World Event ขนาดใหญ่
+
+---
+
+## สิ่งที่ต้องได้จากผู้ใช้
+| เมื่อไหร่ | สิ่งที่ต้องใช้ |
+|---|---|
+| Milestone 2 | ภาพ Boss Forest Guardian (ไม่มีก็ใช้ placeholder ได้) |
+| Milestone 5 | tile หมู่บ้านเพิ่ม (ถ้าต้องการ) |
+| Milestone 6–8 | tile sheet + Master Map ของ A2, A3, B1, B2, B3, Asteria City |
+| เมื่อไหร่ก็ได้ | สไปรต์ตัวละคร/มอนสเตอร์สไตล์เดียวกับฉาก |

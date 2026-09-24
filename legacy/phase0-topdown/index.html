@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eclipse Online - Phase 1</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="hud">
+      <div id="fps">FPS: 0</div>
+      <div id="pos">X: 0, Y: 0</div>
+      <div id="monster-count">Monsters: 0</div>
+    </div>
+
+    <div id="combat-hud">
+      <div id="class-name">Aegis Guardian</div>
+      <div id="hp-bar-container">
+        <div id="hp-bar-fill"></div>
+        <span id="hp-text">120 / 120</span>
+      </div>
+      <div id="abilities">
+        <div class="ability" id="ability-shieldbash">
+          <span class="ability-label" data-label="Q: Shield Bash">Q: Shield Bash - Ready</span>
+        </div>
+        <div class="ability" id="ability-ironwall">
+          <span class="ability-label" data-label="E: Iron Wall">E: Iron Wall - Ready</span>
+        </div>
+      </div>
+      <div id="attack-hint">Space: Basic Attack</div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

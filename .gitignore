@@ -1,0 +1,7 @@
+# generated previews / check pictures (recreate with npm run sheets / assets / maps / isomaps)
+tools/out/
+
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
