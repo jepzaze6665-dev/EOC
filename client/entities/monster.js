@@ -196,7 +196,8 @@ export class Monster {
     this.statuses.clear();
   }
 
-  render(renderer, { targeted = false } = {}) {
+  // targeted = the player's current target (yellow frame), hovered = under the mouse (white frame)
+  render(renderer, { targeted = false, hovered = false } = {}) {
     if (!this.alive && this.deathTimer <= 0) return;
 
     const pos = worldToScreen(this.tx, this.ty);
@@ -230,8 +231,8 @@ export class Monster {
       g.fillStyle = targeted ? '#ffd24a' : '#d05050';
       g.fillRect(x, y, Math.max(0, Math.round(barW * hpPct)), 2);
 
-      if (targeted) {
-        g.strokeStyle = '#ffd24a';
+      if (targeted || hovered) {
+        g.strokeStyle = targeted ? '#ffd24a' : 'rgba(255, 255, 255, 0.85)';
         g.lineWidth = 1;
         g.strokeRect(Math.round(pos.x - 9) + 0.5, Math.round(pos.y - height - 2) + 0.5, 18, height + 3);
       }

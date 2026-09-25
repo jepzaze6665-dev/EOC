@@ -73,6 +73,13 @@ export class Hud {
     this.el.skillbar.innerHTML = '';
     this.skillSlots = [];
 
+    // basic attack (left mouse button)
+    const attack = document.createElement('div');
+    attack.className = 'skill-slot utility';
+    attack.title = 'Basic attack - คลิกซ้ายไปทางเมาส์ (กดค้างเพื่อโจมตีต่อเนื่อง)';
+    attack.innerHTML = '<b>LMB</b><span>Attack</span>';
+    this.el.skillbar.appendChild(attack);
+
     const skills = character.skills || [];
     skills.slice(0, 4).forEach((skill, index) => {
       const slot = document.createElement('div');
@@ -86,6 +93,18 @@ export class Hud {
       this.el.skillbar.appendChild(slot);
       this.skillSlots.push({ id: skill.id, mp: skill.mp, el: slot, cooldownEl: slot.querySelector('.cooldown'), def: skill });
     });
+
+    // ultimate (R)
+    this.ultimateSlot = null;
+    if (character.ultimate) {
+      const ult = character.ultimate;
+      const slot = document.createElement('div');
+      slot.className = 'skill-slot ultimate';
+      slot.title = `${ult.name} (Ultimate) — ${ult.desc}`;
+      slot.innerHTML = `<div class="cooldown"></div><b>R</b><span>${ult.name}</span>`;
+      this.el.skillbar.appendChild(slot);
+      this.ultimateSlot = { id: ult.id, el: slot, cooldownEl: slot.querySelector('.cooldown'), def: ult };
+    }
 
     const dodge = document.createElement('div');
     dodge.className = 'skill-slot utility';
@@ -108,6 +127,12 @@ export class Hud {
       slot.cooldownEl.style.height = `${ratio * 100}%`;
       slot.el.classList.toggle('on-cooldown', cooldown > 0);
       slot.el.classList.toggle('no-resource', character.mp < slot.mp);
+    }
+    if (this.ultimateSlot) {
+      const slot = this.ultimateSlot;
+      const cooldown = player.cooldowns[slot.id] || 0;
+      slot.cooldownEl.style.height = `${cooldown > 0 ? Math.min(1, cooldown / slot.def.cooldown) * 100 : 0}%`;
+      slot.el.classList.toggle('on-cooldown', cooldown > 0);
     }
     if (this.dodgeSlot) {
       this.dodgeSlot.cooldownEl.style.height = `${Math.max(0, Math.min(1, dodgeRatio)) * 100}%`;

@@ -18,7 +18,8 @@ import { DEV_MODE } from '../core/env.js';
 import { DebugPanel } from '../ui/debug-panel.js';
 import { drawDebugOverlay, pickTile } from '../rendering/debug-overlay.js';
 import { MapTransition } from '../world/map-transition.js';
-import { CHARACTER_HEIGHT } from '../rendering/sprites.js';
+import { CHARACTER_HEIGHT, MONSTER_HEIGHT } from '../rendering/sprites.js';
+import { pointerToEntity, pointerToWorld } from '../core/pointer.js';
 import { Particles } from '../rendering/particles.js';
 import { Player } from '../entities/player.js';
 import { Npc } from '../entities/npc.js';
@@ -127,6 +128,8 @@ export class WorldScene {
     this.dialogue = null;
     this.nearest = null;
     this.target = null;
+    this.hoverMonster = null;
+    this.aimPoint = null;
     this.game.hud.hideDialogue();
     this.game.hud.setPrompt(null);
 
@@ -167,6 +170,7 @@ export class WorldScene {
   }
 
   exit() {
+    this.game.renderer.canvas.style.cursor = '';
     if (this.debug) this.debug.hide();
     this.game.renderer.setMode('pixel');
     this.game.renderer.setZoom(0);
@@ -198,6 +202,7 @@ export class WorldScene {
       map: this.map,
       monsters: this.monsters,
       target: this.target,
+      aimPoint: this.aimPoint,
       damageMonster: (monster, amount, crit) => this.damageMonster(monster, amount, crit),
       applyStatus: (monster, status) => monster.statuses.add(status.type, status.duration, status.value),
       floatingText: (tx, ty, text, color) => this.addFloater(tx, ty, text, color),
@@ -253,7 +258,8 @@ export class WorldScene {
     } else {
       if (input.wasPressed('Escape') && panels.isOpen) panels.close();
       move = input.moveVector();
-      this.handleCombatInput(input, dt);
+      this.updateAim(input);
+      this.handleCombatInput(input, move);
     }
 
     if (this.dodgeTimer > 0) {
@@ -323,40 +329,100 @@ export class WorldScene {
     debug.update(this.frameDt || 1 / 60, this);
   }
 
-  handleCombatInput(input, dt) {
+  // Mouse aim (brief: "Mouse = Aim / Target"). Runs every frame while playing.
+  //   aim direction  from the character's body toward the mouse -> player.setAim()
+  //   aimPoint       the map tile under the mouse (for skills cast at a spot)
+  //   hoverMonster   the monster whose sprite is under the mouse (click = make it the target)
+  updateAim(input) {
+    const renderer = this.game.renderer;
+    const mouse = input.mouse;
+    const canvas = renderer.canvas;
+    this.hoverMonster = null;
+    if (!mouse.inside) {
+      this.aimPoint = null;
+      this.player.setAim(null);
+      return;
+    }
+
+    const e = pointerToEntity(renderer, mouse);
+    const body = this.player.screenPos;
+    const dx = e.x - body.x;
+    const dy = e.y - (body.y - CHARACTER_HEIGHT / 2);
+    const length = Math.hypot(dx, dy);
+    if (length > 2) this.player.setAim({ x: dx / length, y: dy / length });
+    this.aimPoint = pointerToWorld(renderer, this.map, mouse);
+
+    let best = Infinity;
+    for (const monster of this.monsters) {
+      if (!monster.alive) continue;
+      const p = worldToScreen(monster.tx, monster.ty);
+      const height = MONSTER_HEIGHT[monster.def.body] || 16;
+      if (Math.abs(e.x - p.x) > 10 || e.y > p.y + 4 || e.y < p.y - height - 4) continue;
+      const d = Math.abs(e.x - p.x) + Math.abs(e.y - (p.y - height / 2));
+      if (d < best) {
+        best = d;
+        this.hoverMonster = monster;
+      }
+    }
+    const cursor = this.hoverMonster ? 'pointer' : 'crosshair';
+    if (canvas.style.cursor !== cursor) canvas.style.cursor = cursor;
+  }
+
+  // Controls (brief section 13):
+  //   Left click  basic attack toward the mouse (hold to keep attacking); clicking a
+  //               monster also makes it the target
+  //   1-4         skills          R  ultimate
+  //   Shift guard   Q dodge   F potion   (E talk is handled in updateInteraction)
+  // While the F8 debug panel is open, left click only picks tiles.
+  handleCombatInput(input, move) {
     const player = this.player;
     player.guarding = input.isDown('ShiftLeft') || input.isDown('ShiftRight');
 
-    if (input.wasPressed('Tab')) this.cycleTarget();
     if (input.wasPressed('KeyF')) this.quickPotion();
 
     if (input.wasPressed('KeyQ') && this.dodgeCooldown <= 0 && canAct(player)) {
+      // dodge where you walk; standing still, dodge toward the mouse
+      const walking = move.x !== 0 || move.y !== 0;
       this.dodgeCooldown = DODGE_COOLDOWN;
       this.dodgeTimer = 0.22;
-      this.dodgeVec = { ...player.facingVec };
+      this.dodgeVec = walking ? { x: move.x, y: move.y } : { ...player.facingVec };
       player.statuses.add('invulnerable', 0.38);
       this.spawnEffect('dash', player.tx, player.ty, { color: '#9fe8ff' });
     }
 
-    if (input.wasPressed('Space') && !this.game.panels.isOpen) {
-      const result = useBasicAttack(this.world);
-      if (result.ok) this.player.markCombat(4);
+    const debugOpen = this.debug && this.debug.active;
+    if (!debugOpen && !this.game.panels.isOpen) {
+      if (input.wasPressed('Mouse0') && this.hoverMonster) this.target = this.hoverMonster;
+      if (input.isDown('Mouse0')) {
+        const result = useBasicAttack(this.world);
+        if (result.ok) {
+          player.markCombat(4);
+          player.faceAim();
+        }
+      }
     }
 
-    const skills = getClassSkills(this.character.classId);
+    const skills = getClassSkills(this.character.classId, this.character.advancedClassId);
     SKILL_KEYS.forEach((key, index) => {
-      if (!input.wasPressed(key)) return;
-      const skill = skills[index];
-      if (!skill) return;
-      const result = useSkill(this.world, skill.id);
-      if (!result.ok) {
-        if (result.reason) this.game.toasts.push(result.reason, 'warn');
-        return;
-      }
-      this.player.markCombat(5);
-      this.refreshHud();
+      if (input.wasPressed(key) && skills[index]) this.castSkill(skills[index].id);
     });
+    if (input.wasPressed('KeyR')) {
+      if (this.character.ultimate) this.castSkill(this.character.ultimate.id);
+      else this.game.toasts.push('คลาสนี้ยังไม่มี Ultimate', 'warn');
+    }
   }
+
+  castSkill(skillId) {
+    const result = useSkill(this.world, skillId);
+    if (!result.ok) {
+      if (result.reason) this.game.toasts.push(result.reason, 'warn');
+      return;
+    }
+    this.player.markCombat(5);
+    this.player.faceAim();
+    this.refreshHud();
+  }
+
 
   quickPotion() {
     const index = this.character.inventory.findIndex((slot) => {
@@ -429,19 +495,6 @@ export class WorldScene {
       this.target = null;
     }
     this.game.hud.setTarget(this.target);
-  }
-
-  cycleTarget() {
-    const candidates = this.monsters
-      .filter((monster) => monster.alive && distanceTiles(this.player, monster) <= TARGET_DROP_RANGE)
-      .sort((a, b) => distanceTiles(this.player, a) - distanceTiles(this.player, b));
-
-    if (candidates.length === 0) {
-      this.target = null;
-      return;
-    }
-    const currentIndex = candidates.indexOf(this.target);
-    this.target = candidates[(currentIndex + 1) % candidates.length];
   }
 
   // Exit Zones: stepping into one starts the transition to the map it points at.
@@ -894,7 +947,7 @@ export class WorldScene {
     // Layers 4-6: NPCs / monsters, player, effects - all Y-sorted together
     for (const node of this.nodes) node.render(renderer);
     for (const npc of this.npcs) this.renderNpc(renderer, npc);
-    for (const monster of this.monsters) monster.render(renderer, { targeted: monster === this.target });
+    for (const monster of this.monsters) monster.render(renderer, { targeted: monster === this.target, hovered: monster === this.hoverMonster });
     for (const projectile of this.projectiles) projectile.render(renderer);
     if (this.player.alive) this.player.render(renderer);
     this.particles.render(renderer);

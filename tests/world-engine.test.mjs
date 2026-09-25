@@ -436,5 +436,84 @@ section('Map Manager and Map Transition');
     arrivals[1].point.tx === village.spawns.default.tx && arrivals[1].point.ty === village.spawns.default.ty);
 }
 
+// ------------------------------------------------------------------ Phase 9: aimed combat
+
+section('Combat: mouse aim, skills and ultimates');
+{
+  const { initClassSystem } = await import('../client/systems/class-system.js');
+  const { useSkill, useBasicAttack, getUltimate } = await import('../client/systems/skill-system.js');
+  const { Statuses } = await import('../client/systems/combat.js');
+  initClassSystem();
+  setProjection('topdown');
+
+  // a tiny fake world: player at (10, 10), monsters placed around it
+  const makeMonster = (tx, ty) => ({
+    tx, ty, alive: true, hp: 9999, defense: 0, statuses: new Statuses(),
+    forceAggro() { this.aggro = true; }
+  });
+  const makeWorld = (classId, monsters, aim, aimPoint = null) => {
+    const hits = new Set();
+    const player = { tx: 10, ty: 10, facingVec: aim, cooldowns: {}, statuses: new Statuses(), attackCooldown: 0 };
+    return {
+      hits,
+      character: { classId, mp: 999, resource: 'MP', stats: { atk: 20, spd: 5 }, passives: {}, skillMods: {} },
+      player, monsters, target: null, aimPoint, map: maps['lumina-village'],
+      damageMonster: (m) => hits.add(m),
+      applyStatus: (m, st) => m.statuses.add(st.type, st.duration, st.value),
+      floatingText() {}, effect() {}, spawnProjectile(p) { this.projectile = p; },
+      movePlayerByScreenVector() { return true; }
+    };
+  };
+
+  for (const classId of ['aegis-guardian', 'umbral-blade', 'astral-weaver']) {
+    const ult = getUltimate(classId);
+    check(`${classId} has an ultimate`, !!ult && ult.ultimate === true && ult.mp === 0);
+  }
+
+  // Umbral ultimate: a wide cone toward the mouse - hits what is in front, not behind
+  const right = makeMonster(12, 10);
+  const left = makeMonster(8, 10);
+  let world = makeWorld('umbral-blade', [right, left], { x: 1, y: 0 });
+  let result = useSkill(world, 'eclipse-rend');
+  check('Eclipse Rend hits the monster the mouse points at', result.ok && world.hits.has(right));
+  check('...and not the one behind the player', !world.hits.has(left));
+  check('the ultimate goes on cooldown', world.player.cooldowns['eclipse-rend'] > 30);
+  check('its self-status (invulnerable) is applied', world.player.statuses.has('invulnerable'));
+  world = makeWorld('umbral-blade', [right, left], { x: -1, y: 0 });
+  useSkill(world, 'eclipse-rend');
+  check('aiming the other way hits the other monster', world.hits.has(left) && !world.hits.has(right));
+
+  // Astral ultimate: area at the mouse point, clamped to range
+  const near = makeMonster(14, 10);
+  const far = makeMonster(10, 16);
+  world = makeWorld('astral-weaver', [near, far], { x: 1, y: 0 }, { tx: 14, ty: 10.5 });
+  useSkill(world, 'celestial-loom');
+  check('Celestial Loom lands on the mouse point', world.hits.has(near) && !world.hits.has(far));
+  const distant = makeMonster(30, 10);
+  world = makeWorld('astral-weaver', [distant], { x: 1, y: 0 }, { tx: 30, ty: 10 });
+  useSkill(world, 'celestial-loom');
+  check('...but never further than its range', !world.hits.has(distant));
+
+  // Aegis ultimate: everything around the player, pulled onto the Aegis
+  const a = makeMonster(11, 11);
+  const b = makeMonster(9, 9.5);
+  const outside = makeMonster(16, 10);
+  world = makeWorld('aegis-guardian', [a, b, outside], { x: 1, y: 0 });
+  useSkill(world, 'dawn-bastion');
+  check('Dawn Bastion hits all around the player', world.hits.has(a) && world.hits.has(b) && !world.hits.has(outside));
+  check('...stuns and taunts them', a.statuses.has('stun') && a.aggro === true);
+  check('...and reduces the Aegis\'s damage taken', world.player.statuses.has('damage_reduction'));
+
+  // basic attack follows the aim too
+  const closeRight = makeMonster(11.2, 10);
+  const closeLeft = makeMonster(8.8, 10);
+  world = makeWorld('umbral-blade', [closeRight, closeLeft], { x: -1, y: 0 });
+  useBasicAttack(world);
+  check('basic attack (left click) hits toward the mouse', world.hits.has(closeLeft) && !world.hits.has(closeRight));
+  world = makeWorld('astral-weaver', [], { x: 0, y: -1 });
+  useBasicAttack(world);
+  check('Astral basic attack fires its bolt toward the mouse', world.projectile && world.projectile.facing.y === -1);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

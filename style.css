@@ -591,6 +591,8 @@ html, body {
 .skill-slot.no-resource { border-color: #6b3b3b; }
 .skill-slot.no-resource em { color: #e06a6a; }
 .skill-slot.utility { border-style: dashed; }
+.skill-slot.ultimate { border-color: #d8b04a; box-shadow: 0 0 6px rgba(216, 176, 74, 0.45); }
+.skill-slot.ultimate b { color: #ffd24a; }
 
 /* ---------------------------------------------------------- target frame */
 
