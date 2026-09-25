@@ -60,50 +60,50 @@ export const TREE_NODES = [
     effect: { kind: 'passive', passive: { atkPct: 0.06 } }
   },
 
-  // ================= Umbral Blade =================
+  // ================= Umbral Sword =================
   {
-    id: 'b-slash-rank', classId: 'umbral-blade', branch: 'base', tier: 1, maxRank: 3, cost: 1,
+    id: 'b-slash-rank', classId: 'umbral-sword', branch: 'base', tier: 1, maxRank: 3, cost: 1,
     name: 'Wider Arc', desc: 'Crescent Slash แรงขึ้น +25% ต่อแรงก์',
     effect: { kind: 'skillRank', skillId: 'crescent-slash', power: 0.25 }
   },
   {
-    id: 'b-echo-rank', classId: 'umbral-blade', branch: 'base', tier: 1, maxRank: 3, cost: 1,
+    id: 'b-echo-rank', classId: 'umbral-sword', branch: 'base', tier: 1, maxRank: 3, cost: 1,
     name: 'Killing Edge', desc: 'Echo Strike แรงขึ้น +35% ต่อแรงก์',
     effect: { kind: 'skillRank', skillId: 'echo-strike', power: 0.35 }
   },
   {
-    id: 'b-agility', classId: 'umbral-blade', branch: 'base', tier: 1, maxRank: 3, cost: 1,
+    id: 'b-agility', classId: 'umbral-sword', branch: 'base', tier: 1, maxRank: 3, cost: 1,
     name: 'Agility', desc: 'SPD +2 ต่อแรงก์',
     effect: { kind: 'passive', passive: { spdFlat: 2 } }
   },
   {
-    id: 'b-precision', classId: 'umbral-blade', branch: 'base', tier: 2, maxRank: 3, cost: 1,
+    id: 'b-precision', classId: 'umbral-sword', branch: 'base', tier: 2, maxRank: 3, cost: 1,
     name: 'Precision', desc: 'โอกาสคริต +4% ต่อแรงก์', requires: { node: 'b-agility', level: 6 },
     effect: { kind: 'passive', passive: { critBonus: 0.04 } }
   },
   {
-    id: 'b-step-cd', classId: 'umbral-blade', branch: 'base', tier: 2, maxRank: 2, cost: 1,
+    id: 'b-step-cd', classId: 'umbral-sword', branch: 'base', tier: 2, maxRank: 2, cost: 1,
     name: 'Fleeting Shadow', desc: 'Shadow Step คูลดาวน์ลดลง 1 วินาทีต่อแรงก์', requires: { node: 'b-slash-rank', level: 8 },
     effect: { kind: 'skillRank', skillId: 'shadow-step', cooldown: -1 }
   },
   {
-    id: 'b-bloodthirst', classId: 'umbral-blade', branch: 'base', tier: 3, maxRank: 2, cost: 2,
+    id: 'b-bloodthirst', classId: 'umbral-sword', branch: 'base', tier: 3, maxRank: 2, cost: 2,
     name: 'Bloodthirst', desc: 'ดูดเลือด 4% ของดาเมจที่ทำได้ ต่อแรงก์',
     requires: { node: 'b-precision', level: 14, points: 6 },
     effect: { kind: 'passive', passive: { lifestealPct: 0.04 } }
   },
   {
-    id: 'b-ferocity', classId: 'umbral-blade', branch: 'base', tier: 3, maxRank: 2, cost: 2,
+    id: 'b-ferocity', classId: 'umbral-sword', branch: 'base', tier: 3, maxRank: 2, cost: 2,
     name: 'Ferocity', desc: 'ATK +7% ต่อแรงก์', requires: { level: 16, points: 8 },
     effect: { kind: 'passive', passive: { atkPct: 0.07 } }
   },
   {
-    id: 'b-adv-rank', classId: 'umbral-blade', branch: 'advanced', tier: 1, maxRank: 3, cost: 1,
+    id: 'b-adv-rank', classId: 'umbral-sword', branch: 'advanced', tier: 1, maxRank: 3, cost: 1,
     name: 'Path Mastery', desc: 'สกิลประจำสายอาชีพแรงขึ้น +20% ต่อแรงก์',
     effect: { kind: 'advancedSkillRank', power: 0.2 }
   },
   {
-    id: 'b-adv-crit', classId: 'umbral-blade', branch: 'advanced', tier: 2, maxRank: 3, cost: 1,
+    id: 'b-adv-crit', classId: 'umbral-sword', branch: 'advanced', tier: 2, maxRank: 3, cost: 1,
     name: 'Executioner', desc: 'โอกาสคริต +5% ต่อแรงก์', requires: { node: 'b-adv-rank' },
     effect: { kind: 'passive', passive: { critBonus: 0.05 } }
   },

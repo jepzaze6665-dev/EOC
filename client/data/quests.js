@@ -54,7 +54,7 @@ export const QUEST_DEFS = [
       gold: 60,
       itemByClass: {
         'aegis-guardian': 'mace-guard',
-        'umbral-blade': 'edge-duskfang',
+        'umbral-sword': 'edge-duskfang',
         'astral-weaver': 'staff-apprentice'
       }
     }
@@ -132,7 +132,7 @@ QUEST_DEFS.push(
     title: 'Trial of the Edge',
     giver: 'veyra-trainer',
     level: 20,
-    requires: { level: 20, classId: 'umbral-blade' },
+    requires: { level: 20, classId: 'umbral-sword' },
     summary: 'บททดสอบของนักดาบ: ความเร็วและความแม่นยำ',
     offerText: 'ดาบที่ลังเลคือดาบที่ตาย จัดการ Gloom Slime 12 ตัว และ Hollow Stalker 4 ตัว',
     completionText: 'คมพอแล้ว ต่อจากนี้เจ้าต้องเลือกเองว่าจะคมไปในทางไหน',

@@ -1,5 +1,5 @@
 // ECLIPSE ONLINE - entry point.
-// Flow: TITLE -> CHARACTER CREATION (preset / class / confirm) -> LOADING -> VILLAGE
+// Flow: TITLE -> CHARACTER CREATION (class / name / confirm) -> LOADING -> VILLAGE
 
 import { Game } from './core/game.js';
 import { Hud } from './ui/hud.js';

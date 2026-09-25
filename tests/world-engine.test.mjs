@@ -465,7 +465,7 @@ section('Combat: mouse aim, skills and ultimates');
     };
   };
 
-  for (const classId of ['aegis-guardian', 'umbral-blade', 'astral-weaver']) {
+  for (const classId of ['aegis-guardian', 'umbral-sword', 'astral-weaver']) {
     const ult = getUltimate(classId);
     check(`${classId} has an ultimate`, !!ult && ult.ultimate === true && ult.mp === 0);
   }
@@ -473,13 +473,13 @@ section('Combat: mouse aim, skills and ultimates');
   // Umbral ultimate: a wide cone toward the mouse - hits what is in front, not behind
   const right = makeMonster(12, 10);
   const left = makeMonster(8, 10);
-  let world = makeWorld('umbral-blade', [right, left], { x: 1, y: 0 });
+  let world = makeWorld('umbral-sword', [right, left], { x: 1, y: 0 });
   let result = useSkill(world, 'eclipse-rend');
   check('Eclipse Rend hits the monster the mouse points at', result.ok && world.hits.has(right));
   check('...and not the one behind the player', !world.hits.has(left));
   check('the ultimate goes on cooldown', world.player.cooldowns['eclipse-rend'] > 30);
   check('its self-status (invulnerable) is applied', world.player.statuses.has('invulnerable'));
-  world = makeWorld('umbral-blade', [right, left], { x: -1, y: 0 });
+  world = makeWorld('umbral-sword', [right, left], { x: -1, y: 0 });
   useSkill(world, 'eclipse-rend');
   check('aiming the other way hits the other monster', world.hits.has(left) && !world.hits.has(right));
 
@@ -507,12 +507,50 @@ section('Combat: mouse aim, skills and ultimates');
   // basic attack follows the aim too
   const closeRight = makeMonster(11.2, 10);
   const closeLeft = makeMonster(8.8, 10);
-  world = makeWorld('umbral-blade', [closeRight, closeLeft], { x: -1, y: 0 });
+  world = makeWorld('umbral-sword', [closeRight, closeLeft], { x: -1, y: 0 });
   useBasicAttack(world);
   check('basic attack (left click) hits toward the mouse', world.hits.has(closeLeft) && !world.hits.has(closeRight));
   world = makeWorld('astral-weaver', [], { x: 0, y: -1 });
   useBasicAttack(world);
   check('Astral basic attack fires its bolt toward the mouse', world.projectile && world.projectile.facing.y === -1);
+}
+
+section('Class = Preset Character');
+{
+  const { getStartingClasses, getAdvancements, getClass } = await import('../client/systems/class-system.js');
+  const { createCharacter, buildAppearance, loadCharacter } = await import('../client/systems/character.js');
+
+  for (const classDef of getStartingClasses()) {
+    check(`${classDef.id} has a full preset (look, weapon, animation set, VFX)`,
+      !!classDef.preset && !!classDef.preset.skin && !!classDef.preset.hairStyle && !!classDef.weapon &&
+      !!classDef.animationSet && !!classDef.vfx && !!classDef.vfx.primary);
+    const c = createCharacter({ name: 'Tester', classId: classDef.id });
+    check(`a new ${classDef.id} looks exactly like its class preset`,
+      JSON.stringify(c.appearance) === JSON.stringify(classDef.preset));
+    check(`${classDef.id} saves carry no separate appearance choice`, !('presetId' in c));
+    for (const adv of getAdvancements(classDef.id)) {
+      const look = buildAppearance(adv.id);
+      check(`${adv.id} keeps the ${classDef.id} face with its own colour and gear`,
+        look.skin === classDef.preset.skin && look.hair === classDef.preset.hair && look.cloth === adv.color && look.kit === adv.kit);
+    }
+  }
+  const ignored = createCharacter({ name: 'Tester', presetId: 'p05', classId: 'astral-weaver' });
+  check('an old presetId argument is ignored', JSON.stringify(ignored.appearance) === JSON.stringify(getClass('astral-weaver').preset));
+  check('an unknown class falls back to a plain look', buildAppearance('no-such-class').kit === 'none');
+
+  // an old save: Umbral Blade + an appearance preset
+  const store = new Map();
+  globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) };
+  const old = createCharacter({ name: 'Veteran', classId: 'umbral-sword' });
+  old.classId = 'umbral-blade';
+  old.presetId = 'p03';
+  old.unlockedClasses = ['umbral-blade'];
+  store.set('eclipse-online.character', JSON.stringify(old));
+  const loaded = loadCharacter();
+  check('old Umbral Blade saves load as Umbral Sword', !!loaded && loaded.classId === 'umbral-sword', loaded ? loaded.classId : 'null');
+  check('...their unlocked classes are renamed too', !!loaded && !(loaded.unlockedClasses || []).includes('umbral-blade'));
+  check('...and they use the Umbral Sword preset', !!loaded && JSON.stringify(loaded.appearance) === JSON.stringify(getClass('umbral-sword').preset) && !('presetId' in loaded));
+  delete globalThis.localStorage;
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

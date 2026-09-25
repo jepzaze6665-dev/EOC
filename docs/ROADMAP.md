@@ -17,10 +17,13 @@ Brief ต้นฉบับอยู่ใน `docs/briefs/`
   - ความสูง 3 ระดับ + บันได + ผนังหน้าผา
   - ขอบพื้นกลืนกัน, ตลิ่ง/ฟองน้ำ, เงาใต้วัตถุ, โทนสีอุ่น, ขอบจอมืด
   - สะพานชิ้นเดียว, บันไดเป็นภาพเดียวต่อชุด
-  - ~2 ms/frame, 206 tests ผ่าน
+  - ~2 ms/frame
+- **(2026-09-25) Phase 9 — การควบคุมตาม brief:** WASD เดิน, เมาส์เล็ง (ตัวละครหันตามเมาส์), คลิกซ้ายบนมอนสเตอร์ = เลือกเป้า, กดค้างคลิกซ้าย = โจมตีปกติ, 1–4 สกิล, **R = Ultimate** (Dawn Bastion / Eclipse Rend / Celestial Loom), Shift กัน, Q หลบ, F โพชั่น, E คุย — Space ตี และ Tab ล็อกเป้า ถูกตัดออก; HUD: LMB 1 2 3 R Q F
+- **(2026-09-25) Phase 10 — คลาส = ตัวละครสำเร็จรูป:** `preset` / `weapon` / `animationSet` / `vfx` ใน `classes.js`, หน้าตามาจากคลาส (`buildAppearance(classId)`), หน้าสร้างตัวละคร **Class → Name → Confirm**, Umbral Blade → **Umbral Sword** (เซฟเก่าแปลงอัตโนมัติ), โจมตีปกติใช้สี `vfx.primary` ของคลาส; ระบบหน้าตา 6 แบบเก่าเก็บใน `legacy/appearance-presets/`
+- ทดสอบ: `npm test` 229 ผ่าน + ทดสอบใน Chrome จริง (`tools/out/cdp/p9.mjs`, `p10.mjs` — อยู่ใน tools/out ไม่ขึ้น git)
 
-### เข้า A1 ได้อย่างไร (ชั่วคราว)
-เข้าเกม → กด `` ` `` (แผงนักพัฒนา) → "→ A1 (iso)"
+### เข้า A1 ได้อย่างไร
+เดินออกทางเหนือของหมู่บ้าน (บันได Route A) → A1
 
 ---
 
@@ -50,33 +53,9 @@ Brief ต้นฉบับอยู่ใน `docs/briefs/`
 
 ## 🔧 งานที่ค้างอยู่ (ทำต่อจากตรงนี้)
 
-### Phase 9 — การควบคุมตาม brief (ทำไปครึ่งหนึ่ง)
-**เสร็จแล้ว (ยังไม่ต่อเข้ากับปุ่ม — เกมยังใช้ปุ่มเดิมได้ปกติ):**
-- `client/core/pointer.js` — แปลงเมาส์ → พิกัดโลก (`pointerToEntity`, `pointerToWorld`)
-- `client/core/input.js` — มีเมาส์แล้ว: `input.mouse {x, y, inside}`, ปุ่มเมาส์เป็น `'Mouse0'` (ซ้าย) / `'Mouse2'`
-- Ultimate 1 ท่าต่อคลาส ใน `client/data/skills.js` (`ultimate: true`) + `ultimate:` ใน `classes.js`
-  - Aegis **Dawn Bastion** (`nova`: ดาเมจรอบตัว + stun + taunt + ลดดาเมจ 50%)
-  - Umbral **Eclipse Rend** (`cone` 220° ไปทางเมาส์ + อมตะชั่วครู่)
-  - Astral **Celestial Loom** (`aoe_point` ตรงตำแหน่งเมาส์ + slow)
-- `skill-system.js` — effect ใหม่ `nova`, `aoe_point` (ใช้ `world.aimPoint`), `getUltimate(classId)`, selfStatus ใช้ได้กับทุก effect
-- `character.js` — `character.ultimate` (derived)
-- `player.js` — `setAim(vec)` (facingVec = ทิศเมาส์), `faceAim()` (หันหน้าไปทางที่ตี)
-
-**ยังต้องทำ (ใน `client/scenes/world-scene.js` + HUD):**
-1. `updateAim(input)` ทุกเฟรม: เวกเตอร์จากตัวละคร (ยกขึ้น ~8 entity px) → เมาส์ → `player.setAim()`, `this.aimPoint = pointerToWorld(...)`, หา `hoverMonster` (กรอบสไปรต์ในหน่วย entity px, ใช้ `MONSTER_HEIGHT`), cursor ของ canvas: crosshair / pointer
-2. `handleCombatInput`: **ลบ Space โจมตี และ Tab/`cycleTarget()`** → คลิกซ้ายโดนมอนสเตอร์ = ตั้งเป้า, กดค้างคลิกซ้าย = โจมตีปกติ (`useBasicAttack`), 1–4 สกิล, **R = `useSkill(world, character.ultimate.id)`**, ทุกครั้งที่ตีสำเร็จเรียก `player.faceAim()`; ตอนเปิด F8 คลิกซ้ายใช้เลือกช่องเท่านั้น (ไม่ตี)
-3. Q หลบ: ทิศ = ทิศที่เดิน ถ้าไม่เดินใช้ทิศเมาส์ — Shift กัน / F โพชั่น / E คุย คงไว้ (Space ใน dialogue ยังใช้เลื่อนข้อความได้)
-4. เพิ่ม `aimPoint: this.aimPoint` ใน getter `world`
-5. `monster.render(..., { targeted, hovered })` — hovered วาดกรอบสีขาว
-6. HUD (`client/ui/hud.js`): ช่อง **LMB Attack** หน้าสุด + ช่อง **R Ultimate** พร้อมคูลดาวน์; แก้ข้อความแนะนำปุ่มใน `index.html` และ TIPS ใน `loading-scene.js`
-7. ทดสอบใน Chrome (CDP: `Input.dispatchMouseEvent`) — ตี/สกิล/ult ไปทางเมาส์, คลิกเลือกเป้า, F8 ไม่ตี
-
-### Phase 10 — คลาส = ตัวละครสำเร็จรูป (ยังไม่เริ่ม)
-1. `classes.js`: เพิ่ม `preset` ต่อคลาส — `{ skin, hair, hairStyle, cloth, accent, kit }`, `weapon` (ชื่ออาวุธประจำ: Shadow Blade / Shield+Sword / Celestial Loom+Astral Thread), `animationSet` (ข้อมูล — ระบบแอนิเมชันแยกเป็น NOT IMPLEMENTED ถึง Phase 11–13), `vfx` (สีธีม: Shadow / Holy / Astral)
-2. เปลี่ยน id `umbral-blade` → `umbral-sword` ทั้งโปรเจกต์ (skills, quests, skill-tree, dev-tools, trial) + ชื่อ **Umbral Sword** — ประเภทอาวุธ `blade` คงเดิม
-3. `character.js`: appearance มาจาก `classDef.preset` (คลาส 2 ใช้ preset ของคลาสฐาน + สี accent ของคลาส 2), ลบ `presetId`; **ตัวแปลงเซฟเก่า** ใน `hydrate` (`umbral-blade` → `umbral-sword`, ทิ้ง presetId)
-4. หน้าสร้างตัวละคร (`character-creation-ui.js`, `character-creation-scene.js`, `index.html`): ตัดขั้นเลือกหน้าตา 6 แบบ → เลือกคลาส (โชว์ตัวละครสำเร็จรูป) → ตั้งชื่อ → ยืนยัน; `data/presets.js` เหลือแค่สุ่มชื่อ
-5. Equipment ยังเพิ่มค่าสถานะได้ แต่ไม่เปลี่ยนภาพอาวุธ (sprite kit มาจากคลาสเท่านั้น — ปัจจุบันก็เป็นแบบนี้อยู่แล้ว)
+ไม่มีงานค้างครึ่งทาง — Phase 9 และ 10 เสร็จแล้ว
+**ขั้นต่อไปที่เสนอ (brief Phase 11–13):** animation set + VFX theme ต่อคลาส (ตอนนี้ทุกคลาสใช้ท่าเดินชุดเดียวกัน, `animationSet` ยังเป็นแค่ข้อมูล)
+งานแมพ (บอส, ความลับ, หมู่บ้าน iso, แมพใหม่) ยังพักตามข้อ 14 จนกว่าผู้ใช้สั่ง
 
 ### เทียบ brief หลัก (03) กับของที่มี
 | Phase ใน brief | สถานะ |
@@ -85,9 +64,9 @@ Brief ต้นฉบับอยู่ใน `docs/briefs/`
 | First milestone: FPS display | ✅ (มุมขวาบน) |
 | First milestone: Debug Mode **F8** | ✅ (2026-09-25) แผงข้อมูล + ปุ่มชั้น VISUAL/COLLISION/OBJECT/SECRET/GRID + เมาส์ชี้/คลิกดูข้อมูลช่อง, ปิดใน production |
 | 8 Basic HUD | ✅ มีแล้ว — ขาด minimap (optional) |
-| 9 Combat Foundation | ✅ มีแล้ว — ต้องเปลี่ยนเป็นเมาส์เล็ง + คลิกซ้าย + R Ultimate, ยังไม่มี Ultimate |
-| 10 Class System | ✅ มีแล้ว — ต้องเปลี่ยนเป็น class = preset |
-| 11–13 Umbral / Aegis / Astral | ⚠️ มีสกิล/passive/resource/skill tree แล้ว — ขาด Ultimate, animation set, VFX theme ต่อคลาส |
+| 9 Combat Foundation | ✅ เมาส์เล็ง + คลิกซ้าย + R Ultimate (Phase 9) |
+| 10 Class System | ✅ class = preset (Phase 10) |
+| 11–13 Umbral / Aegis / Astral | ⚠️ มีสกิล/passive/resource/skill tree/Ultimate แล้ว — ขาด animation set และ VFX ต่อคลาส (มีแค่สีธีม) |
 | 14 Map Secrets | ❌ (Milestone 3 เดิม) |
 | 15 Dungeon / Boss | ❌ (Milestone 2 เดิม: Forest Guardian) |
 | 16 Multiplayer foundation | ❌ |

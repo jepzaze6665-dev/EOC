@@ -281,36 +281,6 @@ html, body {
 
 #creation-name:focus { border-color: var(--gold); }
 
-/* ---------------------------------------------------------- preset grid */
-
-.preset-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 10px;
-}
-
-.pick-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 6px;
-  background: rgba(20, 20, 45, 0.7);
-  border: 2px solid var(--border);
-  color: var(--muted);
-  font-size: 11px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, transform 0.08s;
-}
-
-.pick-card canvas {
-  image-rendering: pixelated;
-  background: rgba(8, 8, 20, 0.5);
-}
-
-.pick-card:hover { border-color: var(--border-lit); transform: translateY(-2px); }
-.pick-card.selected { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 16px rgba(232, 192, 115, 0.2); }
-
 /* ---------------------------------------------------------- class grid */
 
 .class-grid {
@@ -333,6 +303,15 @@ html, body {
   cursor: pointer;
   transition: border-color 0.15s, transform 0.08s, background 0.15s;
 }
+
+/* Class = Preset Character: each card shows the fixed look of that class. */
+.class-portrait {
+  align-self: center;
+  image-rendering: pixelated;
+  background: rgba(8, 8, 20, 0.5);
+}
+
+.class-weapon { font-size: 11px; color: var(--gold); }
 
 .class-card:hover { transform: translateY(-2px); background: rgba(32, 32, 66, 0.8); }
 .class-card.selected { border-color: var(--gold); background: rgba(40, 36, 70, 0.9); }

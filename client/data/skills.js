@@ -37,22 +37,22 @@ export const SKILL_DEFS = {
     desc: 'ดึงความสนใจศัตรูรอบตัวและทำให้เคลื่อนที่ช้าลง'
   },
 
-  // ---------- Umbral Blade ----------
+  // ---------- Umbral Sword ----------
   'crescent-slash': {
-    name: 'Crescent Slash', classId: 'umbral-blade', effect: 'cone',
+    name: 'Crescent Slash', classId: 'umbral-sword', effect: 'cone',
     mp: 8, cooldown: 4, range: 2.2, arc: 130, power: 1.35,
     color: '#ff9a6b',
     desc: 'ฟันเป็นวงกว้างโดนศัตรูทุกตัวด้านหน้า'
   },
   'shadow-step': {
-    name: 'Shadow Step', classId: 'umbral-blade', effect: 'dash',
+    name: 'Shadow Step', classId: 'umbral-sword', effect: 'dash',
     mp: 10, cooldown: 7, distance: 3.2, power: 1.1,
     selfStatus: { type: 'invulnerable', duration: 0.45 },
     color: '#b07be0',
     desc: 'พุ่งไปข้างหน้าอย่างรวดเร็ว ช่วงสั้น ๆ จะไม่ได้รับความเสียหาย'
   },
   'echo-strike': {
-    name: 'Echo Strike', classId: 'umbral-blade', effect: 'melee',
+    name: 'Echo Strike', classId: 'umbral-sword', effect: 'melee',
     mp: 14, cooldown: 8, range: 1.6, power: 2.5,
     color: '#ff6b6b',
     desc: 'โจมตีหนักใส่เป้าหมายเดียว ดาเมจสูงที่สุดของคลาส'
@@ -148,7 +148,7 @@ Object.assign(SKILL_DEFS, {
 });
 
 // ---------- Ultimates (R) - one per starting class, kept by its advanced classes ----------
-// Each one matches its class's VFX theme colour (see CLASS_DEFS preset.vfx).
+// Each one matches its class's VFX theme colour (see vfx in data/classes.js).
 Object.assign(SKILL_DEFS, {
   'dawn-bastion': {
     name: 'Dawn Bastion', classId: 'aegis-guardian', effect: 'nova', ultimate: true,
@@ -160,7 +160,7 @@ Object.assign(SKILL_DEFS, {
     desc: 'ปักโล่ปลดปล่อยแสงศักดิ์สิทธิ์รอบตัว ทำดาเมจ มึนงงศัตรู 1.5 วิ ดึงความสนใจ และลดดาเมจที่ได้รับ 50% เป็นเวลา 6 วินาที'
   },
   'eclipse-rend': {
-    name: 'Eclipse Rend', classId: 'umbral-blade', effect: 'cone', ultimate: true,
+    name: 'Eclipse Rend', classId: 'umbral-sword', effect: 'cone', ultimate: true,
     mp: 0, cooldown: 40, range: 3.4, arc: 220, power: 3.0,
     selfStatus: { type: 'invulnerable', duration: 0.6 },
     color: '#a070ff',

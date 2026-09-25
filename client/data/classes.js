@@ -5,6 +5,16 @@
 //   advancements: ids of the classes this one can grow into (the class tree)
 //   ultimate: the R skill (advanced classes keep their base class's ultimate)
 //
+// Class = Preset Character (brief section 10). A starting class fixes everything about
+// how the character looks and fights - the player picks a class, not a face:
+//   preset        the character's look: skin, hair, hairStyle, cloth, accent, kit
+//   weapon        signature weapon (part of the preset - no free weapon swapping in sprites;
+//                 equipment still adds stats, it never changes the weapon picture)
+//   animationSet  which animation set the class uses. Only the shared walk cycle exists
+//                 today - class animation sets: NOT IMPLEMENTED (brief phases 11-13)
+//   vfx           colour theme of the class's effects (basic attack, projectiles, ultimate)
+// Advanced classes keep their base class's preset, with their own colour and kit.
+//
 // NOTE (Phase 7): unlock conditions for secret classes must move to the server.
 // Anything shipped in client code can be read by players.
 
@@ -17,6 +27,10 @@ export const CLASS_DEFS = [
     role: 'Tank',
     kit: 'shield',
     color: '#4a7fd0',
+    preset: { skin: '#e3b48c', hair: '#c9a227', hairStyle: 'short', cloth: '#4a7fd0', accent: '#e8d8a0', kit: 'shield' },
+    weapon: 'Shield + Sword',
+    animationSet: 'aegis',
+    vfx: { theme: 'holy', primary: '#ffd873', secondary: '#fff3c8' },
     tagline: 'Hold the line. Nothing passes.',
     description: 'ผู้ปกป้องแนวหน้า เลือดเยอะ เกราะหนา ดึงความสนใจศัตรู และกันดาเมจแทนเพื่อนร่วมทีม เล่นง่ายที่สุดสำหรับผู้เริ่มต้น',
     stats: { hp: 140, mp: 50, atk: 9, def: 15, spd: 7 },
@@ -30,12 +44,16 @@ export const CLASS_DEFS = [
     advancements: ['warden-of-dawn', 'bulwark-sentinel', 'oath-breaker']
   },
   {
-    id: 'umbral-blade',
+    id: 'umbral-sword',
     tier: 'starting',
-    name: 'Umbral Blade',
+    name: 'Umbral Sword',
     role: 'Melee DPS',
     kit: 'blade',
-    color: '#c0553f',
+    color: '#8a5ad0',
+    preset: { skin: '#d8a07a', hair: '#1e1a24', hairStyle: 'ponytail', cloth: '#3a2f4a', accent: '#a070ff', kit: 'blade' },
+    weapon: 'Shadow Blade',
+    animationSet: 'umbral',
+    vfx: { theme: 'shadow', primary: '#a070ff', secondary: '#4a2a70' },
     tagline: 'Strike first. Strike twice.',
     description: 'นักดาบระยะประชิด ดาเมจสูง เคลื่อนที่ไว เน้นต่อคอมโบและหาจังหวะเข้าหลังศัตรู แลกมากับเลือดที่น้อยกว่า',
     stats: { hp: 100, mp: 60, atk: 16, def: 8, spd: 11 },
@@ -55,6 +73,10 @@ export const CLASS_DEFS = [
     role: 'Ranged / Magic',
     kit: 'staff',
     color: '#7b5cff',
+    preset: { skin: '#f0d2b8', hair: '#d6d0e6', hairStyle: 'long', cloth: '#3f4a8b', accent: '#9fd8ff', kit: 'staff' },
+    weapon: 'Celestial Loom + Astral Thread',
+    animationSet: 'astral',
+    vfx: { theme: 'astral', primary: '#9fd8ff', secondary: '#c6b8ff' },
     tagline: 'The sky answers those who ask.',
     description: 'ผู้ร่ายเวทระยะไกล เก่งดาเมจเป็นพื้นที่และควบคุมศัตรู ต้องบริหารมานาให้ดี เพราะร่างกายบอบบางที่สุดในสามคลาส',
     stats: { hp: 85, mp: 130, atk: 14, def: 6, spd: 9 },
@@ -96,7 +118,7 @@ export const CLASS_DEFS = [
   },
 
   {
-    id: 'nightfall-reaper', tier: 'advanced', parent: 'umbral-blade',
+    id: 'nightfall-reaper', tier: 'advanced', parent: 'umbral-sword',
     name: 'Nightfall Reaper', role: 'Burst DPS', kit: 'blade', color: '#7a3a6a',
     requires: { level: 20 }, description: 'ตีตราเป้าหมายแล้วปิดจบด้วยดาเมจก้อนใหญ่ครั้งเดียว',
     statBonus: { hp: 25, mp: 30, atk: 11, def: 2, spd: 1 },
@@ -104,7 +126,7 @@ export const CLASS_DEFS = [
     allowedWeapons: ['blade'], skills: ['death-mark']
   },
   {
-    id: 'duskrunner', tier: 'advanced', parent: 'umbral-blade',
+    id: 'duskrunner', tier: 'advanced', parent: 'umbral-sword',
     name: 'Duskrunner', role: 'Mobility DPS', kit: 'blade', color: '#3f8a76',
     requires: { level: 20 }, description: 'เร็วที่สุดในเกม เข้า-ออกวงต่อสู้ได้อย่างอิสระ',
     statBonus: { hp: 35, mp: 25, atk: 7, def: 3, spd: 4 },
@@ -112,7 +134,7 @@ export const CLASS_DEFS = [
     allowedWeapons: ['blade'], skills: ['phantom-rush']
   },
   {
-    id: 'blade-of-echoes', tier: 'advanced', parent: 'umbral-blade',
+    id: 'blade-of-echoes', tier: 'advanced', parent: 'umbral-sword',
     name: 'Blade of Echoes', role: 'Combo DPS', kit: 'blade', color: '#b07a3a',
     requires: { level: 20 }, description: 'ฟันซ้ำหลายครั้งในจังหวะเดียว เก่งเมื่อเจอศัตรูเป็นกลุ่ม',
     statBonus: { hp: 30, mp: 35, atk: 8, def: 3, spd: 2 },

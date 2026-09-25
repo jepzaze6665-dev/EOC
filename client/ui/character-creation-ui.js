@@ -1,14 +1,15 @@
-// Step 1 Preset -> Step 2 Class -> Step 3 Confirm.
-// The preset grid and the class grid are both generated from data files,
-// so adding a preset or a class needs no change here.
+// Step 1 Class -> Step 2 Name -> Step 3 Confirm.
+// Class = Preset Character: picking a class also picks the look, weapon, animation and
+// effects (the class's `preset` in data/classes.js). The class grid is generated from
+// the data file, so adding a class needs no change here.
 
-import { PRESETS, randomPreset, randomName, getPreset } from '../data/presets.js';
+import { randomName } from '../data/names.js';
 import { getStartingClasses, getClass, getAdvancements, getSecretSlots } from '../systems/class-system.js';
-import { getClassSkills } from '../systems/skill-system.js';
+import { getClassSkills, getUltimate } from '../systems/skill-system.js';
 import { buildAppearance } from '../systems/character.js';
 import { renderCharacterPortrait } from '../rendering/sprites.js';
 
-const STEPS = ['preset', 'class', 'confirm'];
+const STEPS = ['class', 'name', 'confirm'];
 const PREVIEW_DIRS = ['s', 'w', 'n', 'e'];
 const NAME_PATTERN = /^[A-Za-z0-9ก-๙]{2,12}$/;
 
@@ -20,7 +21,6 @@ export class CharacterCreationUI {
     this.el = {
       name: document.getElementById('creation-name'),
       randomize: document.getElementById('btn-randomize'),
-      presetGrid: document.getElementById('preset-grid'),
       classGrid: document.getElementById('class-grid'),
       classDetail: document.getElementById('class-detail'),
       confirmSummary: document.getElementById('confirm-summary'),
@@ -32,21 +32,19 @@ export class CharacterCreationUI {
       next: document.getElementById('btn-next')
     };
 
-    this.state = { step: 'preset', presetId: PRESETS[0].id, classId: null, name: '' };
+    this.state = { step: 'class', classId: null, name: '' };
     this.time = 0;
   }
 
   open() {
     const starting = getStartingClasses();
     this.state = {
-      step: 'preset',
-      presetId: PRESETS[0].id,
+      step: 'class',
       classId: starting.length ? starting[0].id : null,
       name: randomName()
     };
     this.time = 0;
 
-    this.renderPresetGrid();
     this.renderClassGrid();
     this.el.name.value = this.state.name;
 
@@ -59,7 +57,7 @@ export class CharacterCreationUI {
     this.el.back.onclick = () => this.goBack();
     this.el.next.onclick = () => this.goNext();
 
-    this.setStep('preset');
+    this.setStep('class');
   }
 
   close() {
@@ -82,7 +80,7 @@ export class CharacterCreationUI {
       li.classList.toggle('done', index < STEPS.indexOf(step));
     });
 
-    this.el.back.textContent = step === 'preset' ? 'Title' : 'Back';
+    this.el.back.textContent = step === 'class' ? 'Title' : 'Back';
     this.el.next.textContent = step === 'confirm' ? 'Enter World' : 'Next';
     if (step === 'confirm') this.renderSummary();
     this.setError('');
@@ -99,17 +97,17 @@ export class CharacterCreationUI {
   }
 
   goNext() {
-    if (this.state.step === 'preset') {
-      if (!NAME_PATTERN.test(this.state.name.trim())) {
-        this.setError('ชื่อต้องยาว 2-12 ตัวอักษร (ห้ามเว้นวรรคและอักขระพิเศษ)');
-        return;
-      }
-      this.setStep('class');
-      return;
-    }
     if (this.state.step === 'class') {
       if (!this.state.classId) {
         this.setError('เลือกคลาสก่อนจึงจะไปต่อได้');
+        return;
+      }
+      this.setStep('name');
+      return;
+    }
+    if (this.state.step === 'name') {
+      if (!NAME_PATTERN.test(this.state.name.trim())) {
+        this.setError('ชื่อต้องยาว 2-12 ตัวอักษร (ห้ามเว้นวรรคและอักขระพิเศษ)');
         return;
       }
       this.setStep('confirm');
@@ -117,7 +115,6 @@ export class CharacterCreationUI {
     }
     this.onConfirm({
       name: this.state.name.trim(),
-      presetId: this.state.presetId,
       classId: this.state.classId
     });
   }
@@ -128,47 +125,13 @@ export class CharacterCreationUI {
   }
 
   randomize() {
-    this.state.presetId = randomPreset().id;
     this.state.name = randomName();
     this.el.name.value = this.state.name;
-    this.markSelected(this.el.presetGrid, this.state.presetId);
     this.setError('');
     this.refreshPreview();
   }
 
   // ---------------------------------------------------------------- grids
-
-  renderPresetGrid() {
-    this.el.presetGrid.innerHTML = '';
-    for (const preset of PRESETS) {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'pick-card';
-      card.dataset.id = preset.id;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = 60;
-      canvas.height = 96;
-      card.appendChild(canvas);
-
-      const label = document.createElement('span');
-      label.textContent = preset.label;
-      card.appendChild(label);
-
-      renderCharacterPortrait(canvas, {
-        skin: preset.skin, hair: preset.hair, hairStyle: preset.hairStyle,
-        accent: preset.accent, cloth: '#6b7a8f', kit: 'none'
-      }, { scale: 3 });
-
-      card.onclick = () => {
-        this.state.presetId = preset.id;
-        this.markSelected(this.el.presetGrid, preset.id);
-        this.refreshPreview();
-      };
-      this.el.presetGrid.appendChild(card);
-    }
-    this.markSelected(this.el.presetGrid, this.state.presetId);
-  }
 
   renderClassGrid() {
     this.el.classGrid.innerHTML = '';
@@ -179,10 +142,13 @@ export class CharacterCreationUI {
       card.dataset.id = classDef.id;
       card.style.setProperty('--class-color', classDef.color);
       card.innerHTML = `
+        <canvas class="class-portrait" width="60" height="96"></canvas>
         <span class="class-role">${classDef.role}</span>
         <strong class="class-name">${classDef.name}</strong>
+        <span class="class-weapon">${classDef.weapon}</span>
         <span class="class-tagline">${classDef.tagline}</span>
       `;
+      renderCharacterPortrait(card.querySelector('canvas'), buildAppearance(classDef.id), { scale: 3 });
       card.onclick = () => {
         this.state.classId = classDef.id;
         this.markSelected(this.el.classGrid, classDef.id);
@@ -214,6 +180,7 @@ export class CharacterCreationUI {
       this.el.classDetail.innerHTML = '';
       return;
     }
+    const ultimate = getUltimate(classDef.id);
     const maxStat = 150;
     const statRow = (label, value) => `
       <div class="stat-row">
@@ -231,22 +198,24 @@ export class CharacterCreationUI {
         ${statRow('DEF', classDef.stats.def)}
         ${statRow('SPD', classDef.stats.spd)}
       </div>
+      <h4>Weapon</h4>
+      <p class="class-desc">${classDef.weapon}</p>
       <h4>Starting Skills</h4>
       <ul class="skill-list">
         ${getClassSkills(classDef.id).map((s, i) => `<li><b>[${i + 1}] ${s.name}</b> — ${s.desc}</li>`).join('')}
+        ${ultimate ? `<li><b>[R] ${ultimate.name}</b> — ${ultimate.desc}</li>` : ''}
       </ul>
     `;
   }
 
   renderSummary() {
-    const preset = getPreset(this.state.presetId);
     const classDef = getClass(this.state.classId);
     const advancements = getAdvancements(this.state.classId);
 
     this.el.confirmSummary.innerHTML = `
       <div class="summary-line"><span>Name</span><b>${this.state.name.trim()}</b></div>
-      <div class="summary-line"><span>Preset</span><b>${preset.label}</b></div>
       <div class="summary-line"><span>Class</span><b style="color:${classDef.color}">${classDef.name}</b></div>
+      <div class="summary-line"><span>Weapon</span><b>${classDef.weapon}</b></div>
       <div class="summary-line"><span>Role</span><b>${classDef.role}</b></div>
       <div class="summary-line"><span>Start</span><b>Lumina Village</b></div>
       <div class="tree-preview">
@@ -270,13 +239,14 @@ export class CharacterCreationUI {
   refreshPreview() {
     const classDef = getClass(this.state.classId);
     this.el.previewName.textContent = this.state.name.trim() || '—';
-    this.el.previewClass.textContent = classDef ? `${classDef.name} · ${classDef.role}` : 'เลือกคลาสในขั้นตอนถัดไป';
+    this.el.previewClass.textContent = classDef ? `${classDef.name} · ${classDef.role}` : 'เลือกคลาส';
     if (classDef) this.el.previewClass.style.color = classDef.color;
   }
 
   update(dt) {
     this.time += dt;
-    const look = buildAppearance(this.state.presetId, this.state.classId);
+    if (!this.state.classId) return;
+    const look = buildAppearance(this.state.classId);
     const dir = PREVIEW_DIRS[Math.floor(this.time / 1.6) % PREVIEW_DIRS.length];
     const frame = Math.floor(this.time * 6) % 4;
     renderCharacterPortrait(this.el.preview, look, { scale: 4, dir, frame });

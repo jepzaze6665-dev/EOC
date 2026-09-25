@@ -1,7 +1,6 @@
 // Character creation, derived stats and local persistence.
 // Phase 8 replaces localStorage with an account/database on the server.
 
-import { getPreset } from '../data/presets.js';
 import { getClass } from './class-system.js';
 import { createInventory, addItem } from './inventory.js';
 import { createEquipment, equipmentBonus } from './equipment.js';
@@ -12,26 +11,36 @@ import { aggregatePassives, skillModifiers, availablePoints, allowedWeapons } fr
 
 const STORAGE_KEY = 'eclipse-online.character';
 
-export function buildAppearance(presetId, classId) {
-  const preset = getPreset(presetId);
+// Class = Preset Character: the look comes from the class, never from a separate choice.
+// An advanced class keeps its base class's face and hair, with its own colour and gear.
+const FALLBACK_LOOK = { skin: '#e7b18b', hair: '#2f2118', hairStyle: 'short', accent: '#c3cbdd', cloth: '#6b7a8f', kit: 'none' };
+
+export function buildAppearance(classId) {
   const classDef = getClass(classId);
-  return {
-    skin: preset.skin,
-    hair: preset.hair,
-    hairStyle: preset.hairStyle,
-    accent: preset.accent,
-    cloth: classDef ? classDef.color : '#6b7a8f',
-    kit: classDef ? classDef.kit : 'none'
-  };
+  const base = classDef && classDef.parent ? getClass(classDef.parent) : classDef;
+  const preset = base && base.preset;
+  if (!preset) return { ...FALLBACK_LOOK };
+  if (classDef === base) return { ...preset };
+  return { ...preset, cloth: classDef.color, kit: classDef.kit };
 }
 
-export function createCharacter({ name, presetId, classId }) {
+// Save format changes, applied when an older character is loaded.
+const RENAMED_CLASSES = { 'umbral-blade': 'umbral-sword' }; // 2026-09-25 (brief 03)
+
+function migrate(character) {
+  if (RENAMED_CLASSES[character.classId]) character.classId = RENAMED_CLASSES[character.classId];
+  if (Array.isArray(character.unlockedClasses)) {
+    character.unlockedClasses = character.unlockedClasses.map((id) => RENAMED_CLASSES[id] || id);
+  }
+  delete character.presetId; // appearance presets were replaced by class presets
+}
+
+export function createCharacter({ name, classId }) {
   const classDef = getClass(classId);
   if (!classDef) throw new Error(`Unknown class: ${classId}`);
 
   const character = {
     name: (name || '').trim() || 'Traveler',
-    presetId,
     classId,
     level: 1,
     exp: 0,
@@ -57,6 +66,7 @@ export function createCharacter({ name, presetId, classId }) {
 // Re-derives everything computed from data files, so balance changes apply to
 // characters that were saved earlier.
 export function hydrate(character) {
+  migrate(character);
   // Fields added in Phase 2 - older saves may not have them.
   if (!Array.isArray(character.inventory)) character.inventory = createInventory();
   if (!character.equipment) character.equipment = createEquipment();
@@ -83,7 +93,7 @@ export function hydrate(character) {
   character.resource = classDef ? classDef.resource : 'MP';
   character.skills = getClassSkills(character.classId, character.advancedClassId);
   character.ultimate = getUltimate(character.classId);
-  character.appearance = buildAppearance(character.presetId, character.advancedClassId || character.classId);
+  character.appearance = buildAppearance(character.advancedClassId || character.classId);
   character.stats = stats;
   character.bonus = bonus;
   character.maxHp = stats.hp;
@@ -119,7 +129,9 @@ export function loadCharacter() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
-    if (!data || !data.classId || !getClass(data.classId)) return null;
+    if (!data || !data.classId) return null;
+    migrate(data);
+    if (!getClass(data.classId)) return null;
     return hydrate(data);
   } catch {
     return null;

@@ -221,7 +221,7 @@ export function useBasicAttack(world) {
       speed: attack.speed,
       range: attack.range,
       power: attack.power,
-      color: classDef.color
+      color: classDef.vfx ? classDef.vfx.primary : classDef.color
     });
     return { ok: true };
   }
@@ -231,6 +231,6 @@ export function useBasicAttack(world) {
   );
   if (targets.length === 0) return { ok: true, missed: true };
   for (const target of targets) hit(world, target, attack.power, null);
-  world.effect('slash', targets[0].tx, targets[0].ty, { color: '#ffffff' });
+  world.effect('slash', targets[0].tx, targets[0].ty, { color: classDef.vfx ? classDef.vfx.primary : '#ffffff' });
   return { ok: true };
 }

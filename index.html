@@ -33,8 +33,8 @@
       <header class="panel-header">
         <h2>Character Creation</h2>
         <ol class="stepper">
-          <li data-step="preset">1 · Preset</li>
-          <li data-step="class">2 · Class</li>
+          <li data-step="class">1 · Class</li>
+          <li data-step="name">2 · Name</li>
           <li data-step="confirm">3 · Confirm</li>
         </ol>
       </header>
@@ -47,20 +47,20 @@
         </aside>
 
         <div class="creation-main">
-          <div class="step-panel" data-step="preset">
-            <div class="field-row">
-              <label for="creation-name">Character Name</label>
-              <input id="creation-name" type="text" maxlength="12" autocomplete="off" spellcheck="false">
-              <button id="btn-randomize" type="button" class="btn btn-small">Randomize</button>
-            </div>
-            <h3>Appearance Preset</h3>
-            <div id="preset-grid" class="preset-grid"></div>
-          </div>
-
           <div class="step-panel" data-step="class">
             <h3>Starting Class</h3>
             <div id="class-grid" class="class-grid"></div>
             <div id="class-detail" class="class-detail"></div>
+          </div>
+
+          <div class="step-panel" data-step="name">
+            <h3>Character Name</h3>
+            <div class="field-row">
+              <label for="creation-name">Name</label>
+              <input id="creation-name" type="text" maxlength="12" autocomplete="off" spellcheck="false">
+              <button id="btn-randomize" type="button" class="btn btn-small">Randomize</button>
+            </div>
+            <p class="summary-note">หน้าตา อาวุธ ท่าทาง และเอฟเฟกต์ มาจากคลาสที่เลือก — อุปกรณ์ที่ใส่ภายหลังเพิ่มแค่ค่าสถานะ</p>
           </div>
 
           <div class="step-panel" data-step="confirm">
