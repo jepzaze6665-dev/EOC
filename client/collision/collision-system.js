@@ -34,7 +34,7 @@ export const COLLISION_RULES = {
   5: { name: 'special', walk: false, projectile: true }
 };
 
-// Colors used by the F3 debug overlay and the map preview tool.
+// Colors used by the F8 debug overlay and the map preview tool.
 export const COLLISION_DEBUG_COLORS = {
   1: '#ff4a4a',
   2: '#3aa0ff',

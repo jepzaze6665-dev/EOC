@@ -108,7 +108,7 @@ export default {
 
   // Exit Zones: walking into the rect loads `to` and places the player on its `spawn`.
   exits: [
-    { id: 'route_a', rect: [276, 0, 52, 14], to: 'whispering-forest', spawn: 'from_village', label: 'Whispering Forest' }
+    { id: 'route_a', rect: [276, 0, 52, 14], to: 'a1', spawn: 'from_village', label: 'Whispering Forest' }
   ],
 
   objects: [

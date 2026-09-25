@@ -8,6 +8,8 @@
 // asset is shrunk ONCE with high-quality filtering into a cached canvas; each frame
 // then only copies those canvases 1:1 onto whole screen pixels.
 
+import { ISO } from '../data/iso-config.js';
+
 const REGISTRY_URL = 'client/data/asset-registry.json';
 
 // Warm golden colour grade (like the Master Map). It is baked into every cached copy
@@ -32,6 +34,35 @@ export class AssetStore {
     this.loading = new Map();
     this.cache = new Map();
     this.cacheScale = null;
+    // CSS pixels per art pixel (ISO.ART_PIXEL). 0 = smooth scaling.
+    // ?artpx=N in the page address overrides it (for comparing looks while developing).
+    const override = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('artpx') : null;
+    this.artPixel = override !== null && override !== '' ? Number(override) || 0 : ISO.ART_PIXEL;
+  }
+
+  // Draws `image` into w x h. Smooth mode: one high-quality resize. Pixel mode: shrink to
+  // the art-pixel grid first (hard 0/1 transparency), then enlarge with hard pixel edges.
+  paint(g, image, w, h, devicePerArtPixel) {
+    if (!this.artPixel) {
+      g.imageSmoothingEnabled = true;
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(image, 0, 0, w, h);
+      return;
+    }
+    const aw = Math.max(1, Math.round(w / devicePerArtPixel));
+    const ah = Math.max(1, Math.round(h / devicePerArtPixel));
+    const small = document.createElement('canvas');
+    small.width = aw;
+    small.height = ah;
+    const sg = small.getContext('2d');
+    sg.imageSmoothingEnabled = true;
+    sg.imageSmoothingQuality = 'high';
+    sg.drawImage(image, 0, 0, aw, ah);
+    const data = sg.getImageData(0, 0, aw, ah);
+    for (let i = 3; i < data.data.length; i += 4) data.data[i] = data.data[i] >= 128 ? 255 : 0;
+    sg.putImageData(data, 0, 0);
+    g.imageSmoothingEnabled = false;
+    g.drawImage(small, 0, 0, w, h);
   }
 
   async loadRegistry() {
@@ -80,6 +111,7 @@ export class AssetStore {
     const key = variant === 1 && !flip ? id : `${id}|${variant}|${flip ? 1 : 0}`;
     let entry = this.cache.get(key);
     if (entry) return entry;
+    const devicePerArtPixel = this.artPixel * s;
     s *= variant;
 
     const meta = this.meta(id);
@@ -95,10 +127,8 @@ export class AssetStore {
     canvas.width = w;
     canvas.height = h;
     const g = canvas.getContext('2d');
-    g.imageSmoothingEnabled = true;
-    g.imageSmoothingQuality = 'high';
     if (flip) g.setTransform(-1, 0, 0, 1, w, 0);
-    g.drawImage(image, 0, 0, w, h);
+    this.paint(g, image, w, h, devicePerArtPixel);
     g.setTransform(1, 0, 0, 1, 0, 0);
     applyGrade(canvas, copyOf(canvas));
 
@@ -129,9 +159,7 @@ export class AssetStore {
     canvas.width = w;
     canvas.height = h;
     const g = canvas.getContext('2d');
-    g.imageSmoothingEnabled = true;
-    g.imageSmoothingQuality = 'high';
-    g.drawImage(image, 0, 0, w, h);
+    this.paint(g, image, w, h, this.artPixel * s);
     applyGrade(canvas, copyOf(canvas));
     this.cache.set(key, canvas);
     return canvas;

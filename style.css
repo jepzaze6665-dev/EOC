@@ -1202,3 +1202,34 @@ html, body {
   .inv-grid { grid-template-columns: repeat(6, 1fr); }
   .toasts { right: 10px; }
 }
+
+/* ==================== F8 MAP DEBUG (developer only) ==================== */
+#debug-panel {
+  position: fixed;
+  left: 12px;
+  top: 160px;
+  width: 460px;
+  padding: 8px 10px;
+  background: rgba(8, 10, 18, 0.86);
+  border: 1px solid #4a4a6a;
+  border-radius: 6px;
+  color: #e8e4d0;
+  font: 12px/1.45 Consolas, "Courier New", monospace;
+  z-index: 40;
+}
+#debug-panel.hidden { display: none; }
+#debug-panel .debug-title { color: #ffd24a; font-weight: 700; margin-bottom: 6px; }
+#debug-panel .debug-title span { color: #8a86a8; font-weight: 400; }
+#debug-panel .debug-layers { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+#debug-panel button {
+  font: 11px Consolas, monospace;
+  padding: 3px 7px;
+  background: #1c1c2c;
+  color: #8a86a8;
+  border: 1px solid #3a3a54;
+  border-radius: 3px;
+  cursor: pointer;
+}
+#debug-panel button.on { background: #2d4a2d; color: #b8f0b0; border-color: #5a9a5a; }
+#debug-panel pre { margin: 0; white-space: pre-wrap; }
+#debug-panel .debug-sub { color: #ffd24a; margin: 6px 0 2px; }

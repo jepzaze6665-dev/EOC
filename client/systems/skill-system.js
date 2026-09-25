@@ -1,9 +1,12 @@
 // Executes skills against a `world` interface supplied by the scene, so the
 // rules stay independent from rendering.
 //
-// world = { character, player, map, monsters,
+// world = { character, player, map, monsters, aimPoint (mouse, in tiles),
 //           damageMonster(monster, amount, crit), applyStatus(monster, status),
 //           floatingText(tx, ty, text, color), effect(name, tx, ty, options) }
+//
+// Aiming: player.facingVec is the direction toward the mouse, so cones, dashes and
+// projectiles go where the player points.
 
 import { getSkill, SKILL_DEFS } from '../data/skills.js';
 import { getClass } from './class-system.js';
@@ -18,6 +21,13 @@ export function getClassSkills(classId, advancedClassId = null) {
   if (advanced) ids.push(...(advanced.skills || []));
 
   return ids.map((id) => ({ id, ...SKILL_DEFS[id] })).filter((skill) => skill.name);
+}
+
+// The class's ultimate (R). Advanced classes keep the ultimate of their base class.
+export function getUltimate(classId) {
+  const classDef = getClass(classId);
+  const id = classDef && classDef.ultimate;
+  return id && SKILL_DEFS[id] ? { id, ...SKILL_DEFS[id] } : null;
 }
 
 // Applies skill-tree ranks and passive cooldown reduction to a skill definition.
@@ -147,6 +157,30 @@ export function useSkill(world, skillId) {
     player.statuses.add(def.selfStatus.type, def.selfStatus.duration, def.selfStatus.value);
     world.effect('buff', player.tx, player.ty, { color: def.color });
     executed = true;
+  } else if (def.effect === 'nova') {
+    const targets = world.monsters.filter((monster) => monster.alive && inCircle(player, monster, def.radius));
+    for (const target of targets) {
+      hit(world, target, def.power, def);
+      if (def.taunt && target.alive) target.forceAggro(player, 5);
+    }
+    world.effect('aoe', player.tx, player.ty, { color: def.color, radius: def.radius });
+    world.effect('taunt', player.tx, player.ty, { color: def.color, radius: def.radius });
+    executed = true;
+  } else if (def.effect === 'aoe_point') {
+    // centred on the mouse, but never further than the skill's range
+    let point = world.aimPoint;
+    if (!point) {
+      const target = nearestMonster(world, def.range, false);
+      point = target ? { tx: target.tx, ty: target.ty } : { tx: player.tx, ty: player.ty };
+    }
+    const dx = point.tx - player.tx;
+    const dy = point.ty - player.ty;
+    const dist = Math.hypot(dx, dy);
+    if (dist > def.range) point = { tx: player.tx + (dx / dist) * def.range, ty: player.ty + (dy / dist) * def.range };
+    const targets = world.monsters.filter((monster) => monster.alive && inCircle(point, monster, def.radius));
+    for (const target of targets) hit(world, target, def.power, def);
+    world.effect('aoe', point.tx, point.ty, { color: def.color, radius: def.radius });
+    executed = true;
   } else if (def.effect === 'taunt') {
     const targets = world.monsters.filter((monster) => monster.alive && inCircle(player, monster, def.radius));
     for (const target of targets) {
@@ -159,7 +193,8 @@ export function useSkill(world, skillId) {
 
   if (!executed) return { ok: false, reason: 'ใช้สกิลไม่สำเร็จ' };
 
-  if (def.selfStatus && def.effect === 'dash') {
+  // buff and heal apply their self-status above; every other effect applies it here
+  if (def.selfStatus && def.effect !== 'buff' && def.effect !== 'heal') {
     player.statuses.add(def.selfStatus.type, def.selfStatus.duration, def.selfStatus.value);
   }
   character.mp -= def.mp;

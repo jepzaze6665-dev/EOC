@@ -22,7 +22,6 @@ import { groundToScreen, worldToScreen, screenToWorld, depthOf, isoLevelPx } fro
 import { assetStore } from './asset-store.js';
 import { RENDER_LAYERS } from './map-renderer.js';
 import { TerrainFx, EDGE_DIRS, CORNER_DIRS } from './terrain-fx.js';
-import { COLLISION_DEBUG_COLORS } from '../collision/collision-system.js';
 
 const FLAT_DEPTH = -1e6;          // bridges and platforms: under everything that stands on them
 const BLOCK = 8;                  // ground is cached in blocks of 8 x 8 tiles (per level)
@@ -89,23 +88,30 @@ export class IsoMapRenderer {
 
   // ------------------------------------------------------------------ frame
 
-  renderMap(renderer, camera, map) {
+  // options.visual = false (F8 debug [VISUAL] off): work out what is visible, draw nothing.
+  renderMap(renderer, camera, map, options = {}) {
     const s = renderer.hdScale;
     const g = renderer.ctx;
     const W = renderer.canvas.width;
     const H = renderer.canvas.height;
     const range = this.visibleRange(renderer, map);
     this.lastRange = range;
-    this.fx.prepare(s);
+    this.fx.prepare(s, assetStore.artPixel * s);
 
     const chunks = map.chunks.inTileRange(range.x0, range.y0, range.x1, range.y1, this.visibleChunks);
     map.chunks.updateActive(chunks);
 
-    if (this.blockScale !== s || this.blockMap !== map) {
+    if (this.blockScale !== s || this.blockMap !== map || this.blockArt !== assetStore.artPixel) {
+      this.blockArt = assetStore.artPixel;
       this.blocks.clear();
       this.cachedPixels = 0;
       this.blockScale = s;
       this.blockMap = map;
+    }
+
+    if (options.visual === false) {
+      Object.assign(this.stats, { tiles: 'hidden', objects: 0, objectsTotal: map.objects.length, chunks: chunks.length, activeChunks: map.chunks.activeCount });
+      return;
     }
 
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -452,34 +458,5 @@ export class IsoMapRenderer {
     renderer.useEntityTransform();
   }
 
-  // F3: non-walkable collision cells as coloured diamonds, on top of everything.
-  drawCollisionOverlay(renderer, camera, map) {
-    const range = this.lastRange;
-    if (!range) return;
-    const c = map.collision;
-    const k = c.cellsPerTile;
-    const g = renderer.ctx;
-    g.save();
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    g.globalAlpha = 0.42;
-    for (let cy = range.y0 * k; cy <= (range.y1 + 1) * k - 1; cy++) {
-      for (let cx = range.x0 * k; cx <= (range.x1 + 1) * k - 1; cx++) {
-        const code = c.codeAtCell(cx, cy);
-        if (!code) continue;
-        const lift = map.levelAt(Math.floor(cx / k), Math.floor(cy / k)) * isoLevelPx();
-        const corners = [[cx, cy], [cx + 1, cy], [cx + 1, cy + 1], [cx, cy + 1]].map(([x, y]) => {
-          const e = groundToScreen(x / k, y / k);
-          return renderer.toDevice(e.x, e.y - lift);
-        });
-        g.fillStyle = COLLISION_DEBUG_COLORS[code] || '#ffffff';
-        g.beginPath();
-        g.moveTo(corners[0].x, corners[0].y);
-        for (let i = 1; i < 4; i++) g.lineTo(corners[i].x, corners[i].y);
-        g.closePath();
-        g.fill();
-      }
-    }
-    g.restore();
-    renderer.useEntityTransform();
-  }
+
 }

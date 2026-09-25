@@ -14,6 +14,9 @@ import { MapRenderer } from '../rendering/map-renderer.js';
 import { IsoMapRenderer } from '../rendering/iso-map-renderer.js';
 import { MIN_ZOOM, MAX_ZOOM } from '../rendering/camera.js';
 import { ISO } from '../data/iso-config.js';
+import { DEV_MODE } from '../core/env.js';
+import { DebugPanel } from '../ui/debug-panel.js';
+import { drawDebugOverlay, pickTile } from '../rendering/debug-overlay.js';
 import { MapTransition } from '../world/map-transition.js';
 import { CHARACTER_HEIGHT } from '../rendering/sprites.js';
 import { Particles } from '../rendering/particles.js';
@@ -47,7 +50,7 @@ export class WorldScene {
     this.camera = new Camera();
     this.mapRenderer = new MapRenderer();
     this.isoRenderer = new IsoMapRenderer();
-    this.debugView = false;
+    this.debug = DEV_MODE ? new DebugPanel() : null; // F8 map debug (developer mode only)
     this.particles = new Particles();
     this.time = 0;
     this.stepTimer = 0;
@@ -164,6 +167,7 @@ export class WorldScene {
   }
 
   exit() {
+    if (this.debug) this.debug.hide();
     this.game.renderer.setMode('pixel');
     this.game.renderer.setZoom(0);
     setProjection('topdown');
@@ -207,6 +211,7 @@ export class WorldScene {
 
   update(dt) {
     this.time += dt;
+    this.frameDt = dt;
     const input = this.game.input;
     const panels = this.game.panels;
 
@@ -291,7 +296,7 @@ export class WorldScene {
     this.game.hud.setCombatState(this.player.inCombat);
   }
 
-  // Zoom: mouse wheel or +/- , 0 resets.  F3: collision + culling debug view.
+  // Zoom: mouse wheel or +/- , 0 resets.  F8: map debug mode (developer mode only).
   updateCameraInput(input) {
     let step = -input.consumeWheel();
     if (!this.dialogue) {
@@ -306,7 +311,16 @@ export class WorldScene {
       this.camera.snapTo(p.x, p.y);
     }
 
-    if (input.wasPressed('F3')) this.debugView = !this.debugView;
+    if (this.debug) this.updateDebug(input);
+  }
+
+  updateDebug(input) {
+    const debug = this.debug;
+    if (input.wasPressed('F8')) debug.toggle();
+    if (!debug.active) return;
+    debug.hover = input.mouse.inside ? pickTile(this.game.renderer, this.map, input.mouse) : null;
+    if (input.wasPressed('Mouse0') && debug.hover) debug.selected = { ...debug.hover };
+    debug.update(this.frameDt || 1 / 60, this);
   }
 
   handleCombatInput(input, dt) {
@@ -874,7 +888,8 @@ export class WorldScene {
     renderer.beginWorld(this.camera, this.map.background);
 
     // Layer 0: the visible part of the map image. Layers 2-3: placed objects.
-    this.mapView.renderMap(renderer, this.camera, this.map);
+    const debug = this.debug && this.debug.active ? this.debug : null;
+    this.mapView.renderMap(renderer, this.camera, this.map, { visual: !debug || debug.layers.visual });
 
     // Layers 4-6: NPCs / monsters, player, effects - all Y-sorted together
     for (const node of this.nodes) node.render(renderer);
@@ -886,7 +901,9 @@ export class WorldScene {
     renderer.flush();
 
     if (this.map.projection === 'iso') this.isoRenderer.drawAtmosphere(renderer);
-    if (this.debugView) this.mapView.drawCollisionOverlay(renderer, this.camera, this.map);
+    // collision view: iso maps draw it (cached) inside the debug overlay, image maps here
+    if (debug && debug.layers.collision && this.map.projection !== 'iso') this.mapView.drawCollisionOverlay(renderer, this.camera, this.map);
+    if (debug) drawDebugOverlay(renderer, this, debug);
 
     // Layer 7: text drawn at display resolution
     this.renderLabels(renderer);
@@ -895,7 +912,6 @@ export class WorldScene {
       renderer.overlayText(this.character.name, pos.x, pos.y - CHARACTER_HEIGHT - 6, { color: '#9fe8ff', size: 12 });
     }
     this.renderFloaters(renderer);
-    if (this.debugView) this.renderDebugInfo(renderer);
     renderer.end();
 
     // Map transition: black fade, "Loading..." if the map is slow, then the map's name.
@@ -936,28 +952,5 @@ export class WorldScene {
       const pos = worldToScreen(label.tx, label.ty);
       renderer.overlayText(label.text, pos.x, pos.y, { color: '#f2e6c4', size: 11 });
     }
-  }
-
-  renderDebugInfo(renderer) {
-    const code = this.map.collisionAt(this.player.tx, this.player.ty);
-    const iso = this.map.projection === 'iso';
-    const s = this.mapView.stats;
-    const zoom = iso ? `${renderer.zoomLevel} (level ${this.camera.zoom + 1}/${ISO.ZOOM_LEVELS.length})` : `${this.camera.zoom >= 0 ? '+' : ''}${this.camera.zoom}`;
-    const drawn = iso
-      ? `drawn: ground ${s.tiles} (${s.cachedBlocks} cached)  objects ${s.objects}/${s.objectsTotal}  chunks ${s.chunks} visible / ${s.activeChunks} active  tile range ${s.range}`
-      : `drawn: image ${s.imageArea}px  objects ${s.objects}/${s.objectsTotal}  collision rects ${s.overlayRects}`;
-    const lines = [
-      `[F3] DEBUG   ${iso ? 'ISO tile map (hd)' : 'image map (pixel)'}   zoom ${zoom}   entity scale ${renderer.scale}x   devicePixelRatio ${renderer.dpr}`,
-      `map ${this.map.id} ${this.map.width}x${this.map.height} tiles   player ${this.player.tx.toFixed(1)},${this.player.ty.toFixed(1)}   collision here ${code}`,
-      drawn,
-      'collision colors: red 1 blocked · blue 2 water · purple 3 cliff · orange 4 building · pink 5 special'
-    ];
-    // overlay text is positioned in entity pixels; the font itself is in screen pixels
-    const px = (css) => (css * (iso ? renderer.dpr : 1)) / renderer.scale;
-    const left = this.camera.x - renderer.width / 2 + px(8);
-    const top = this.camera.y - renderer.height / 2 + px(170); // below the character panel
-    lines.forEach((text, i) => {
-      renderer.overlayText(text, left, top + i * px(16), { align: 'left', size: 12, color: '#ffe9a8' });
-    });
   }
 }

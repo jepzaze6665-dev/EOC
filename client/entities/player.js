@@ -13,7 +13,11 @@ export class Player {
     this.radius = 0.26;
     this.speed = 4; // tiles per second, the same in every direction
     this.dir = 's';
+    // facingVec = the direction attacks and skills go: toward the mouse (see setAim).
+    // It is a unit vector in screen space.
     this.facingVec = { x: 0, y: 1 };
+    this.aimVec = null;      // latest direction to the mouse, null when the mouse is off the map
+    this.faceAimTimer = 0;   // > 0: the sprite turns to the mouse (just attacked / used a skill)
     this.frame = 0;
     this.animTime = 0;
     this.moving = false;
@@ -44,9 +48,23 @@ export class Player {
     if (this.swingTimer > 0) this.swingTimer -= dt;
     if (this.hurtTimer > 0) this.hurtTimer -= dt;
     if (this.combatTimer > 0) this.combatTimer -= dt;
+    if (this.faceAimTimer > 0) this.faceAimTimer -= dt;
     for (const id of Object.keys(this.cooldowns)) {
       if (this.cooldowns[id] > 0) this.cooldowns[id] -= dt;
     }
+  }
+
+  // Mouse aim, in screen space. Attacks and skills always go toward the mouse.
+  setAim(vec) {
+    this.aimVec = vec;
+    if (vec) this.facingVec = { x: vec.x, y: vec.y };
+  }
+
+  // After an attack the sprite looks where it struck for a moment, even while walking.
+  faceAim(seconds = 0.45) {
+    this.faceAimTimer = Math.max(this.faceAimTimer, seconds);
+    const facing = facingFromScreenVector(this.facingVec.x, this.facingVec.y);
+    if (facing) this.dir = facing;
   }
 
   // `move` is a normalized screen-space vector from Input.moveVector()
@@ -56,10 +74,19 @@ export class Player {
     const blocked = !canAct(this);
     this.moving = !blocked && (move.x !== 0 || move.y !== 0);
 
-    if (this.moving) {
-      const facing = facingFromScreenVector(move.x, move.y);
+    if (this.faceAimTimer > 0) {
+      const facing = facingFromScreenVector(this.facingVec.x, this.facingVec.y);
       if (facing) this.dir = facing;
-      this.facingVec = { x: move.x, y: move.y };
+    }
+
+    if (this.moving) {
+      // walking: the sprite faces where it walks (unless it just attacked);
+      // without a mouse on the map, attacks go the walking direction too
+      if (this.faceAimTimer <= 0) {
+        const facing = facingFromScreenVector(move.x, move.y);
+        if (facing) this.dir = facing;
+      }
+      if (!this.aimVec) this.facingVec = { x: move.x, y: move.y };
 
       const scale = speedMultiplier(this) * (this.guarding ? GUARD_SPEED_SCALE : 1);
       // WASD is a screen direction; the projection turns it into a map direction

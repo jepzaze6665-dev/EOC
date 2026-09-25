@@ -7,6 +7,7 @@ import { Panels } from './ui/panels.js';
 import { Toasts } from './ui/toasts.js';
 import { initClassSystem } from './systems/class-system.js';
 import { installDevTools } from './systems/dev-tools.js';
+import { DEV_MODE } from './core/env.js';
 import { TitleScene } from './scenes/title-scene.js';
 import { CharacterCreationScene } from './scenes/character-creation-scene.js';
 import { LoadingScene } from './scenes/loading-scene.js';
@@ -38,11 +39,13 @@ function boot() {
   window.addEventListener('resize', () => game.renderer.resize());
   game.start('title');
 
-  // Handy while developing: window.eclipse.dev.help() lists the commands,
-  // or press ` in game for the dev panel.
-  window.eclipse = game;
-  game.dev = installDevTools(game);
-  window.eclipse.dev = game.dev;
+  // Developer tools exist only in developer mode (see core/env.js):
+  // window.eclipse.dev.help() lists the commands, ` opens the dev panel, F8 the map debug.
+  if (DEV_MODE) {
+    window.eclipse = game;
+    game.dev = installDevTools(game);
+    window.eclipse.dev = game.dev;
+  }
 }
 
 boot();

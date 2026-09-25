@@ -3,6 +3,7 @@
 //   tier: 'starting' | 'advanced' | 'secret'
 //   kit:  which weapon/gear the sprite generator draws ('shield' | 'blade' | 'staff')
 //   advancements: ids of the classes this one can grow into (the class tree)
+//   ultimate: the R skill (advanced classes keep their base class's ultimate)
 //
 // NOTE (Phase 7): unlock conditions for secret classes must move to the server.
 // Anything shipped in client code can be read by players.
@@ -23,6 +24,7 @@ export const CLASS_DEFS = [
     resource: 'Vigor',
     basicAttack: { effect: 'melee', range: 1.6, arc: 120, power: 1.0, cooldown: 0.7 },
     skills: ['shield-bash', 'iron-wall', 'challenge'],
+    ultimate: 'dawn-bastion',
     allowedWeapons: ['mace'],
     trial: 'q-trial-guardian',
     advancements: ['warden-of-dawn', 'bulwark-sentinel', 'oath-breaker']
@@ -41,6 +43,7 @@ export const CLASS_DEFS = [
     resource: 'Focus',
     basicAttack: { effect: 'melee', range: 1.5, arc: 110, power: 0.95, cooldown: 0.5 },
     skills: ['crescent-slash', 'shadow-step', 'echo-strike'],
+    ultimate: 'eclipse-rend',
     allowedWeapons: ['blade'],
     trial: 'q-trial-blade',
     advancements: ['nightfall-reaper', 'duskrunner', 'blade-of-echoes']
@@ -59,6 +62,7 @@ export const CLASS_DEFS = [
     resource: 'Mana',
     basicAttack: { effect: 'projectile', range: 7, power: 1.0, cooldown: 0.85, speed: 9 },
     skills: ['starfall', 'gravity-well', 'astral-shield'],
+    ultimate: 'celestial-loom',
     allowedWeapons: ['staff'],
     trial: 'q-trial-weaver',
     advancements: ['stormcaller', 'void-scribe', 'lumen-oracle']

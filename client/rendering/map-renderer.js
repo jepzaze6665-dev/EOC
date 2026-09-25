@@ -44,9 +44,11 @@ export class MapRenderer {
     return { left, top, right, bottom, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
   }
 
-  renderMap(renderer, camera, map) {
+  // options.visual = false (F8 debug [VISUAL] off): draw nothing.
+  renderMap(renderer, camera, map, options = {}) {
     const rect = this.visibleRect(renderer, camera, map);
     this.stats.imageArea = `${rect.width}x${rect.height}`;
+    if (options.visual === false) return;
 
     // Layer 0: copy only the visible rectangle of the image, never the whole picture.
     if (map.image && rect.width > 0 && rect.height > 0) {
@@ -77,7 +79,7 @@ export class MapRenderer {
     }
   }
 
-  // F3 debug view: every non-walkable collision cell in its code's color.
+  // F8 debug [COLLISION] on painted maps: every non-walkable collision cell in its code's color.
   // Neighbouring cells with the same code are merged into one rectangle per row.
   drawCollisionOverlay(renderer, camera, map) {
     const c = map.collision;

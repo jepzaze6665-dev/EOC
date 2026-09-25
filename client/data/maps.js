@@ -5,8 +5,7 @@
 
 export const MAP_FILES = {
   'lumina-village': 'client/data/maps/lumina-village.json',
-  'whispering-forest': 'client/data/maps/whispering-forest.json',
-  a1: 'client/data/maps/a1.json' // isometric tile map
+  'a1': 'client/data/maps/a1.json' // isometric tile map
 };
 
 export const DEFAULT_MAP_ID = 'lumina-village';

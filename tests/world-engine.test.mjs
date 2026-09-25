@@ -271,8 +271,10 @@ section('Lumina Village layout');
   for (const [name, code] of Object.entries(COLLISION)) {
     check(`uses collision code ${code} (${name})`, (codes[code] || 0) > 0);
   }
-  check('Route A exit leads to Whispering Forest', map.exits.some((e) => e.to === 'whispering-forest' && e.spawn === 'from_village'));
-  check('Whispering Forest leads back to the village', maps['whispering-forest'].exits.some((e) => e.to === 'lumina-village' && e.spawn === 'from_forest'));
+  check('Route A exit leads to A1 Whispering Forest', map.exits.some((e) => e.to === 'a1' && e.spawn === 'from_village'));
+  check('A1 leads back to the village', maps.a1.exits.some((e) => e.to === 'lumina-village' && e.spawn === 'from_forest'));
+  check('the game has exactly the village and A1', mapIds().join(',') === 'lumina-village,a1');
+  check('A1 has monsters, resources and the warning sign', maps.a1.monsterSpawns.length >= 10 && maps.a1.gatherNodes.length >= 8 && maps.a1.npcs.some((n) => n.id === 'forest-sign'));
   check('the village has a respawn point', !!map.spawns.respawn);
 
   // Route B: walk up to the bridge, the special barrier stops you past it.
@@ -369,7 +371,7 @@ section('Map Manager and Map Transition');
   const loads = [];
   const loader = async (id) => {
     loads.push(id);
-    return new GameMap(loadMapData(id));
+    return buildMap(loadMapData(id));
   };
   const manager = new MapManager({ loader });
   check('manager knows every registered map', mapIds().every((id) => manager.has(id)));
@@ -398,7 +400,7 @@ section('Map Manager and Map Transition');
   }
 
   check('idle transition is not active and fully visible', !transition.active && transition.alpha === 0);
-  check('changeMap starts a transition', transition.changeMap('whispering-forest', 'from_village') === true);
+  check('changeMap starts a transition', transition.changeMap('a1', 'from_village') === true);
   check('a second changeMap while fading is ignored', transition.changeMap('lumina-village') === false);
   const alphas = await run();
   const peak = alphas.indexOf(1);
@@ -407,21 +409,21 @@ section('Map Manager and Map Transition');
   check('fade out goes from visible to black', peak > 0 && fadesOut);
   check('fade in goes from black back to visible', fadesIn && alphas[alphas.length - 1] === 0);
   check('player is placed exactly once', arrivals.length === 1, `${arrivals.length}`);
-  const forest = new GameMap(loadMapData('whispering-forest'));
-  check('player arrives on the named spawn', arrivals[0] && arrivals[0].id === 'whispering-forest' &&
+  const forest = buildMap(loadMapData('a1'));
+  check('player arrives on the named spawn', arrivals[0] && arrivals[0].id === 'a1' &&
     arrivals[0].point.tx === forest.spawns.from_village.tx && arrivals[0].point.ty === forest.spawns.from_village.ty);
-  check('manager now reports the new map', manager.currentId === 'whispering-forest');
+  check('manager now reports the new map', manager.currentId === 'a1');
   check('map name banner is shown after arriving', transition.title === 'Whispering Forest' && transition.titleAlpha > 0);
   check('transition ends idle', !transition.active);
 
   // arriving in the forest should have started loading the village (the forest's exit leads there)
   await tick();
-  const forestLoad = loads.indexOf('whispering-forest');
+  const forestLoad = loads.indexOf('a1');
   check('neighbour maps are preloaded on arrival', forestLoad >= 0 && loads.slice(forestLoad + 1).includes('lumina-village'), loads.join(' > '));
 
   transition.changeMap('no-such-map');
   await run();
-  check('a failed load reports an error and keeps the player where they were', errors.length === 1 && arrivals.length === 1 && manager.currentId === 'whispering-forest');
+  check('a failed load reports an error and keeps the player where they were', errors.length === 1 && arrivals.length === 1 && manager.currentId === 'a1');
   check('a failed load still fades back in', !transition.active && transition.alpha === 0);
 
   const warn = console.warn;

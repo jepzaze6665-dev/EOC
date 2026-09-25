@@ -356,6 +356,12 @@ for (const id of ids) problemCount += await buildMap(id);
 const allIds = fs.readdirSync(SRC_DIR).filter((f) => f.endsWith('.mjs')).map((f) => f.replace(/\.mjs$/, ''));
 const sources = {};
 for (const id of allIds) sources[id] = (await import(pathToFileURL(path.join(SRC_DIR, `${id}.mjs`)).href)).default;
+// isometric maps (tools/iso-map-src) can be exit targets too
+const ISO_SRC_DIR = path.join(ROOT, 'tools', 'iso-map-src');
+for (const file of fs.readdirSync(ISO_SRC_DIR).filter((n) => n.endsWith('.mjs'))) {
+  const isoSrc = (await import(pathToFileURL(path.join(ISO_SRC_DIR, file)).href)).default;
+  sources[isoSrc.id] = { ...isoSrc, exits: [] }; // their own exits are checked by the tests
+}
 const registry = fs.readFileSync(path.join(ROOT, 'client', 'data', 'maps.js'), 'utf8');
 console.log('links between maps:');
 for (const [id, src] of Object.entries(sources)) {

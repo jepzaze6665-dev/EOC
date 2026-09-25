@@ -160,5 +160,44 @@ export default {
     { rect: [79.4, 74.8, 5.2, 1.4], code: 0 }
   ],
   // no particle emitters on this map: performance first (the campfire picture is enough)
-  ambient: []
+  ambient: [],
+
+  // ---- 7. creatures, resources, signs (moved here from the old painted forest, 2026-09-25)
+  // Positions are tile centres checked to be walkable and reachable from the entrance.
+  // gloom-slime = easy, near the entrance, the camp and the river
+  // hollow-stalker = tougher, deeper in, around the eastern ruins
+  monsterSpawns: [
+    { id: 'slime-0', type: 'gloom-slime', tx: 71, ty: 118.5 },
+    { id: 'slime-1', type: 'gloom-slime', tx: 80, ty: 106 },
+    { id: 'slime-2', type: 'gloom-slime', tx: 56, ty: 95.5 },
+    { id: 'slime-3', type: 'gloom-slime', tx: 88.5, ty: 92.5 },
+    { id: 'slime-4', type: 'gloom-slime', tx: 63, ty: 71.5 },
+    { id: 'slime-5', type: 'gloom-slime', tx: 46, ty: 85.5 },
+    { id: 'slime-6', type: 'gloom-slime', tx: 100.5, ty: 112.5 },
+    { id: 'stalker-0', type: 'hollow-stalker', tx: 108.5, ty: 88.5 },
+    { id: 'stalker-1', type: 'hollow-stalker', tx: 116, ty: 76.5 },
+    { id: 'stalker-2', type: 'hollow-stalker', tx: 100.5, ty: 62.5 },
+    { id: 'stalker-3', type: 'hollow-stalker', tx: 119.5, ty: 55 },
+    { id: 'stalker-4', type: 'hollow-stalker', tx: 122, ty: 100.5 }
+  ],
+  gatherNodes: [
+    { id: 'f-herb-0', kind: 'herb', itemId: 'herb-moonleaf', tx: 59, ty: 90.5, respawn: 12 },
+    { id: 'f-herb-1', kind: 'herb', itemId: 'herb-moonleaf', tx: 84.5, ty: 100.5, respawn: 12 },
+    { id: 'f-herb-2', kind: 'herb', itemId: 'herb-moonleaf', tx: 40.5, ty: 70.5, respawn: 12 },
+    { id: 'f-herb-3', kind: 'herb', itemId: 'herb-moonleaf', tx: 95.5, ty: 81, respawn: 12 },
+    { id: 'f-herb-4', kind: 'herb', itemId: 'herb-moonleaf', tx: 111.5, ty: 103.5, respawn: 12 },
+    { id: 'f-ore-0', kind: 'ore', itemId: 'ore-ironvein', tx: 76, ty: 122.5, respawn: 16 },
+    { id: 'f-ore-1', kind: 'ore', itemId: 'ore-ironvein', tx: 105.5, ty: 70.5, respawn: 16 },
+    { id: 'f-ore-2', kind: 'ore', itemId: 'ore-ironvein', tx: 50.5, ty: 60.5, respawn: 16 },
+    { id: 'f-ore-3', kind: 'ore', itemId: 'ore-ironvein', tx: 118.5, ty: 92.5, respawn: 16 }
+  ],
+  npcs: [
+    {
+      id: 'forest-sign', name: 'Weathered Sign', role: 'Sign', kind: 'sign', tx: 99, ty: 134.2,
+      lines: [
+        'ระวัง: พ้นจากจุดนี้ไปไม่ใช่เขตปลอดภัยของหมู่บ้าน',
+        'มีคนขีดข้อความเพิ่มไว้ด้วยลายมือสั่น ๆ ว่า "อย่าเข้าใกล้วงหินทางตะวันออกเฉียงเหนือตอนที่ฟ้ามืด"'
+      ]
+    }
+  ]
 };

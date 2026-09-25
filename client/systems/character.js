@@ -7,7 +7,7 @@ import { createInventory, addItem } from './inventory.js';
 import { createEquipment, equipmentBonus } from './equipment.js';
 import { createQuestLog } from './quest.js';
 import { totalStats, expToNext } from './stats.js';
-import { getClassSkills } from './skill-system.js';
+import { getClassSkills, getUltimate } from './skill-system.js';
 import { aggregatePassives, skillModifiers, availablePoints, allowedWeapons } from './progression.js';
 
 const STORAGE_KEY = 'eclipse-online.character';
@@ -82,6 +82,7 @@ export function hydrate(character) {
   character.role = advancedDef ? advancedDef.role : classDef ? classDef.role : '';
   character.resource = classDef ? classDef.resource : 'MP';
   character.skills = getClassSkills(character.classId, character.advancedClassId);
+  character.ultimate = getUltimate(character.classId);
   character.appearance = buildAppearance(character.presetId, character.advancedClassId || character.classId);
   character.stats = stats;
   character.bonus = bonus;
@@ -97,7 +98,7 @@ export function hydrate(character) {
 
 // Anything derived is rebuilt by hydrate(), so it never gets written to storage.
 const DERIVED_KEYS = [
-  'className', 'baseClassName', 'role', 'resource', 'skills', 'appearance', 'stats', 'bonus',
+  'className', 'baseClassName', 'role', 'resource', 'skills', 'ultimate', 'appearance', 'stats', 'bonus',
   'maxHp', 'maxMp', 'expToNext', 'passives', 'skillMods', 'skillPoints', 'allowedWeapons'
 ];
 

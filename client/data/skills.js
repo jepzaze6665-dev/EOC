@@ -7,6 +7,9 @@
 //           'dash'       move through/behind the target, damage on arrival
 //           'buff'       applies a status to the player
 //           'taunt'      pulls aggro from everything nearby
+//           'nova'       everything in a circle around the player (+ taunt)
+//           'aoe_point'  circle at the mouse position (clamped to range)
+//   ultimate: true  = the class's R skill (one per class, long cooldown, no resource cost)
 //   power:  multiplier applied to ATK
 //   status: { type, duration, value } applied to whoever is hit (or to the player for buffs)
 
@@ -141,6 +144,34 @@ Object.assign(SKILL_DEFS, {
     mp: 28, cooldown: 14, healPct: 0.55,
     color: '#d8c86a',
     desc: 'ฟื้นฟู HP 55% ของค่าสูงสุด'
+  }
+});
+
+// ---------- Ultimates (R) - one per starting class, kept by its advanced classes ----------
+// Each one matches its class's VFX theme colour (see CLASS_DEFS preset.vfx).
+Object.assign(SKILL_DEFS, {
+  'dawn-bastion': {
+    name: 'Dawn Bastion', classId: 'aegis-guardian', effect: 'nova', ultimate: true,
+    mp: 0, cooldown: 45, radius: 3.4, power: 1.8,
+    status: { type: 'stun', duration: 1.5 },
+    selfStatus: { type: 'damage_reduction', duration: 6, value: 0.5 },
+    taunt: true,
+    color: '#ffd873',
+    desc: 'ปักโล่ปลดปล่อยแสงศักดิ์สิทธิ์รอบตัว ทำดาเมจ มึนงงศัตรู 1.5 วิ ดึงความสนใจ และลดดาเมจที่ได้รับ 50% เป็นเวลา 6 วินาที'
+  },
+  'eclipse-rend': {
+    name: 'Eclipse Rend', classId: 'umbral-blade', effect: 'cone', ultimate: true,
+    mp: 0, cooldown: 40, range: 3.4, arc: 220, power: 3.0,
+    selfStatus: { type: 'invulnerable', duration: 0.6 },
+    color: '#a070ff',
+    desc: 'ฟันด้วยเงามืดเป็นวงกว้างเกือบรอบตัวไปทางเมาส์ ดาเมจสูงมาก และอมตะชั่วครู่'
+  },
+  'celestial-loom': {
+    name: 'Celestial Loom', classId: 'astral-weaver', effect: 'aoe_point', ultimate: true,
+    mp: 0, cooldown: 45, range: 8, radius: 3.4, power: 2.6,
+    status: { type: 'slow', duration: 3, value: 0.5 },
+    color: '#9fd8ff',
+    desc: 'ถักทอเส้นดาวลงตรงตำแหน่งเมาส์ ทำดาเมจพื้นที่กว้างและชะลอศัตรู 3 วินาที'
   }
 });
 

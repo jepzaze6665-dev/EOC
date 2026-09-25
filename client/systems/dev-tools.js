@@ -173,8 +173,7 @@ export function installDevTools(game) {
         'eclipse.dev.finishQuest("q-moonleaf")    จบเควสทันที',
         'eclipse.dev.readyToAdvance() Lv.20 + ผ่าน trial',
         'eclipse.dev.killAll()        ล้างมอนสเตอร์ในแมป',
-        'eclipse.dev.teleport("whispering-forest")',
-        'eclipse.dev.teleport("a1")   - isometric tile map (Milestone 1)',
+        'eclipse.dev.teleport("a1")   Whispering Forest (A1)',
         'eclipse.dev.god()            อมตะ'
       ].join('\n'));
     }
@@ -228,8 +227,7 @@ export function installDevTools(game) {
       </div>
       <div class="dev-row">
         <button data-dev="tp-village">→ Village</button>
-        <button data-dev="tp-forest">→ Forest</button>
-        <button data-dev="tp-a1">→ A1 (iso)</button>
+        <button data-dev="tp-a1">→ A1 Forest</button>
       </div>`;
 
     panel.querySelectorAll('button').forEach((button) => {
@@ -246,7 +244,6 @@ export function installDevTools(game) {
         else if (action === 'ready') api.readyToAdvance();
         else if (action === 'killall') api.killAll();
         else if (action === 'tp-village') api.teleport('lumina-village');
-        else if (action === 'tp-forest') api.teleport('whispering-forest');
         else if (action === 'tp-a1') api.teleport('a1');
         else if (action === 'kit') {
           api.give('potion-minor', 10);

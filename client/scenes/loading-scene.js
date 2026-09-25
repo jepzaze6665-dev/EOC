@@ -14,7 +14,7 @@ const TIPS = [
 
 const ZONE_NAMES = {
   'lumina-village': 'Lumina Village',
-  'whispering-forest': 'Whispering Forest'
+  'a1': 'Whispering Forest'
 };
 
 export class LoadingScene {

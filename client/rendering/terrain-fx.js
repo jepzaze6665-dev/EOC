@@ -50,10 +50,12 @@ export class TerrainFx {
     this.scale = null;
   }
 
-  // s = screen pixels per CSS pixel at the current zoom. Builds every mask for that size.
-  prepare(s) {
-    if (s === this.scale) return;
+  // s = screen pixels per CSS pixel at the current zoom; cell = screen pixels per art
+  // pixel (0 = smooth). Builds every mask for that size.
+  prepare(s, cell = 0) {
+    if (s === this.scale && cell === this.cell) return;
     this.scale = s;
+    this.cell = cell > 1 ? cell : 0;
     // same geometry as a scaled ground tile (see asset-store: tiles get +2 px)
     this.hw = (ISO.TILE_W * s) / 2 + 1;
     this.hh = this.hw / 2;
@@ -99,16 +101,22 @@ export class TerrainFx {
     c.height = this.h;
     const g = c.getContext('2d');
     const img = g.createImageData(this.w, this.h);
-    for (let py = 0; py < this.h; py++) {
-      for (let px = 0; px < this.w; px++) {
-        let { u, v } = this.uv(px, py);
+    // Pixel-art mode: every screen pixel inside one art pixel gets the same value, so
+    // blended borders have the same pixel size as the tiles themselves.
+    const cell = this.cell;
+    for (let dy = 0; dy < this.h; dy++) {
+      for (let dx = 0; dx < this.w; dx++) {
+        const px = cell ? Math.floor(dx / cell) : dx;
+        const py = cell ? Math.floor(dy / cell) : dy;
+        let { u, v } = cell ? this.uv((px + 0.5) * cell - 0.5, (py + 0.5) * cell - 0.5) : this.uv(dx, dy);
         const below = u > 1 || v > 1;
         if (u < -0.02 || v < -0.02) continue;
         if (below && (u > 1.6 || v > 1.6)) continue;
         u = Math.min(1, Math.max(0, u));
         v = Math.min(1, Math.max(0, v));
-        const a = test(u, v, px, py);
-        if (a > 0) img.data[(py * this.w + px) * 4 + 3] = Math.round(Math.min(1, a) * 255);
+        let a = test(u, v, px, py);
+        if (cell) a = Math.round(a * 4) / 4; // stepped shading instead of smooth gradients
+        if (a > 0) img.data[(dy * this.w + dx) * 4 + 3] = Math.round(Math.min(1, a) * 255);
       }
     }
     g.putImageData(img, 0, 0);

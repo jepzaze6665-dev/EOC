@@ -1,7 +1,9 @@
-// Keyboard state. Uses e.code so WASD works on any keyboard layout.
+// Keyboard + mouse state. Uses e.code so WASD works on any keyboard layout.
+// Mouse buttons are reported like keys: 'Mouse0' = left, 'Mouse2' = right - but only for
+// clicks on the game canvas, never on UI panels.
 
 const PREVENT_DEFAULT = new Set([
-  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab', 'F3'
+  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab', 'F8'
 ]);
 
 function isTypingInField() {
@@ -14,6 +16,7 @@ export class Input {
     this.held = new Set();
     this.justPressed = new Set();
     this.wheel = 0;
+    this.mouse = { x: 0, y: 0, inside: false }; // CSS pixels over the game canvas
 
     target.addEventListener('keydown', (e) => {
       if (isTypingInField()) return;
@@ -30,6 +33,21 @@ export class Input {
     target.addEventListener('wheel', (e) => {
       if (e.target && e.target.id === 'game-canvas') this.wheel += Math.sign(e.deltaY);
     }, { passive: true });
+
+    target.addEventListener('mousemove', (e) => {
+      this.mouse.x = e.clientX;
+      this.mouse.y = e.clientY;
+      this.mouse.inside = !!e.target && e.target.id === 'game-canvas';
+    });
+    target.addEventListener('mousedown', (e) => {
+      if (!e.target || e.target.id !== 'game-canvas') return;
+      this.justPressed.add(`Mouse${e.button}`);
+      this.held.add(`Mouse${e.button}`);
+    });
+    target.addEventListener('mouseup', (e) => this.held.delete(`Mouse${e.button}`));
+    target.addEventListener('contextmenu', (e) => {
+      if (e.target && e.target.id === 'game-canvas') e.preventDefault();
+    });
 
     // Keys stay stuck down if the window loses focus mid-press.
     window.addEventListener('blur', () => this.held.clear());

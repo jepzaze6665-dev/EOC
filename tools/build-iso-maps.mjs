@@ -257,6 +257,8 @@ async function buildMap(id) {
     reserve(tx, ty, Math.max(1, widthInTiles(asset) / 2 + 0.5));
   }
   for (const p of Object.values(src.spawns)) reserve(p[0], p[1], 2.5);
+  // creatures, resources and NPCs stand on open ground
+  for (const p of [...(src.monsterSpawns || []), ...(src.gatherNodes || []), ...(src.npcs || [])]) reserve(p.tx, p.ty, 1);
   for (const e of src.exits || []) reserve(e.rect[0] + e.rect[2] / 2, e.rect[1] + e.rect[3] / 2, Math.max(e.rect[2], e.rect[3]));
   for (const z of src.collisionZones || []) reserve(z.rect[0] + z.rect[2] / 2, z.rect[1] + z.rect[3] / 2, Math.max(z.rect[2], z.rect[3]) / 2 + 1);
 
